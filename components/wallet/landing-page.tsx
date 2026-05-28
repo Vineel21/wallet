@@ -12,6 +12,7 @@ import { CryptoGlobe } from "@/components/wallet/crypto-globe";
 export function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const pointerActiveRef = useRef(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopyAddress = (e: React.MouseEvent) => {
@@ -21,32 +22,33 @@ export function LandingPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Card 3D tilt animation
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Card 3D tilt animation for mouse hover and touch drag.
+  const tiltCard = (clientX: number, clientY: number, isTouch = false) => {
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     
     // Normalize coordinates (-0.5 to 0.5)
     const px = (x / rect.width) - 0.5;
     const py = (y / rect.height) - 0.5;
     
     // Tilt angle
-    const rotateX = -py * 24;
-    const rotateY = px * 24;
+    const maxTilt = window.innerWidth < 640 ? 16 : 24;
+    const rotateX = -py * maxTilt;
+    const rotateY = px * maxTilt;
     
     gsap.to(card, {
       rotateX,
       rotateY,
       transformPerspective: 1200,
       ease: "power2.out",
-      duration: 0.3
+      duration: isTouch ? 0.16 : 0.3
     });
   };
 
-  const handleMouseLeave = () => {
+  const resetCardTilt = () => {
     const card = cardRef.current;
     if (!card) return;
     gsap.to(card, {
@@ -55,6 +57,33 @@ export function LandingPage() {
       ease: "power3.out",
       duration: 0.7
     });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" && !pointerActiveRef.current) return;
+    tiltCard(e.clientX, e.clientY, e.pointerType !== "mouse");
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a")) return;
+    pointerActiveRef.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    tiltCard(e.clientX, e.clientY, e.pointerType !== "mouse");
+  };
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerActiveRef.current = false;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    resetCardTilt();
+  };
+
+  const handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse") {
+      resetCardTilt();
+    }
   };
 
   useGSAP(() => {
@@ -168,13 +197,16 @@ export function LandingPage() {
           <div className="hero-visual flex w-full min-w-0 flex-col items-center justify-center lg:justify-self-end">
             {/* 3D Tilting Card */}
             <div 
-              className="perspective-1000 preserve-3d w-full max-w-[340px] cursor-pointer xs:max-w-[380px] sm:max-w-[480px]"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              className="perspective-1000 preserve-3d w-full max-w-[340px] touch-pan-y cursor-pointer xs:max-w-[380px] sm:max-w-[480px]"
+              onPointerCancel={handlePointerEnd}
+              onPointerDown={handlePointerDown}
+              onPointerLeave={handlePointerLeave}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerEnd}
             >
               <div 
                 ref={cardRef}
-                className="relative h-[270px] w-full rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow sm:h-[280px]"
+                className="relative h-[270px] w-full rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow will-change-transform sm:h-[280px]"
               >
                 <div className="w-full h-full rounded-[11px] bg-[#050814] p-4 xs:p-5 sm:p-8 flex flex-col justify-between backdrop-blur-md relative overflow-hidden text-left">
                   {/* Sheen backdrop */}
