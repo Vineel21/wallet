@@ -965,14 +965,18 @@ export function ReceiveScreen({
   assetId,
   onAssetChange,
   onCopyText,
-  onShareText
+  onShareText,
+  onSimulateReceive
 }: {
   activeWallet: Wallet | null;
   assetId: string;
   onAssetChange: (assetId: string) => void;
   onCopyText: (value: string) => void;
   onShareText: (value: string) => void;
+  onSimulateReceive: (assetId: string, amount: number) => void;
 }) {
+  const [simAmount, setSimAmount] = useState("1.0");
+
   if (!activeWallet) return null;
   const asset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
@@ -999,6 +1003,44 @@ export function ReceiveScreen({
                 </button>
               </div>
             </div>
+
+            <div className="h-px bg-white/5 my-3" />
+            
+            {/* Simulate Transfer Panel */}
+            <div className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Simulate Incoming Transfer</span>
+              <p className="text-[11px] text-slate-500 leading-normal mb-1">
+                Instantly mock a transaction sending funds to this address to verify your dashboard update.
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    step="any"
+                    className="focus-ring min-h-[42px] w-full rounded-ui border border-white/10 bg-black/40 px-3.5 text-xs text-white"
+                    placeholder="Amount to receive..."
+                    value={simAmount}
+                    onChange={(e) => setSimAmount(e.target.value)}
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase font-mono">
+                    {asset.symbol}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const amt = parseFloat(simAmount);
+                    if (isNaN(amt) || amt <= 0) return;
+                    onSimulateReceive(asset.id, amt);
+                  }}
+                  className={`${buttonPrimary} !min-h-[42px] px-4 py-2 text-xs`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Simulate
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
         <div className="mt-8 flex flex-col gap-2">

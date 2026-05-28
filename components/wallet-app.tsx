@@ -34,7 +34,8 @@ import {
   generateMnemonic,
   now,
   roundBalance,
-  uid
+  uid,
+  shortAddress
 } from "@/lib/mock-data";
 import { readJson, readText, removeStorage, STORAGE, writeJson, writeText } from "@/lib/storage";
 import {
@@ -570,6 +571,45 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     toast("Faucet claimed successfully!");
   }
 
+  function handleSimulateReceive(assetId: string, amount: number) {
+    if (!activeWallet) return;
+    const asset = assetById(assetId);
+    const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
+    
+    const randomSender = asset.chain === "Bitcoin" 
+      ? `bc1q${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}` 
+      : asset.chain === "Solana"
+        ? Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12)
+        : `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}fd87b5a8`;
+
+    const tx: WalletTransaction = {
+      id: uid("tx"),
+      assetId,
+      type: "incoming",
+      status: "success",
+      amount,
+      fee: `0 ${asset.symbol}`,
+      from: randomSender,
+      to: account.address,
+      hash: fakeHash(),
+      createdAt: now()
+    };
+
+    const nextWallet: Wallet = {
+      ...activeWallet,
+      assets: activeWallet.assets.map((holding) =>
+        holding.assetId === assetId
+          ? { ...holding, balance: roundBalance(holding.balance + amount) }
+          : holding
+      ),
+      transactions: [tx, ...activeWallet.transactions]
+    };
+
+    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
+    logEvent("received simulated transfer", `Received ${amount} ${asset.symbol} from ${shortAddress(randomSender)}.`);
+    toast(`Received ${amount} ${asset.symbol}!`);
+  }
+
   function copyText(value: string, label = "Copied.") {
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(value).then(() => toast(label));
@@ -726,6 +766,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           onAssetChange={(assetId) => router.push(`/receive?asset=${assetId}`)}
           onCopyText={copyText}
           onShareText={shareText}
+          onSimulateReceive={handleSimulateReceive}
         />
       );
     }
