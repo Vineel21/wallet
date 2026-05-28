@@ -304,6 +304,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   function remoteWalletToWallet(remote: RemoteWallet, userId = currentUser?.id ?? ""): Wallet {
     const phrases = phraseStore();
     const runtime = runtimeStore()[remote.id];
+    const transactions = (runtime?.transactions ?? []).filter((tx) => tx.from !== "MVP starter allocation");
     return {
       id: remote.id,
       userId,
@@ -321,7 +322,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         balance: 0,
         favorite: index < 2
       })),
-      transactions: runtime?.transactions ?? []
+      transactions
     };
   }
 
@@ -349,26 +350,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       };
     });
 
-    const transactions = assets
-      .filter((holding) => holding.balance > 0)
-      .map((holding) => {
-        const asset = assetById(holding.assetId);
-        const account = wallet.accounts.find((item) => item.chain === asset.chain) ?? wallet.accounts[0];
-        return {
-          id: uid("tx"),
-          assetId: holding.assetId,
-          type: "incoming" as const,
-          status: "success" as const,
-          amount: holding.balance,
-          fee: `0 ${asset.symbol}`,
-          from: "MVP starter allocation",
-          to: account?.address ?? "",
-          hash: fakeHash(),
-          createdAt: now()
-        };
-      });
-
-    return { assets, transactions };
+    return { assets, transactions: [] };
   }
 
   async function loadRemoteData(token: string, userId = currentUser?.id, preferredWalletId = activeWalletId) {
