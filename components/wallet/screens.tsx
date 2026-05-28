@@ -162,7 +162,7 @@ export function ConfirmPhraseScreen({
   const checks = [1, 5, 9];
   return (
     <form className="grid gap-6 max-w-3xl mx-auto w-full text-left py-4" onSubmit={onConfirmPhrase}>
-      <Panel animate>
+      <Panel animate className="relative z-20">
         <h2 className="text-xl font-bold font-display text-white">Verify Recovery Phrase</h2>
         <p className="mt-1 text-xs text-slate-400">Select the matching words at positions #2, #6, and #10.</p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -749,7 +749,7 @@ export function SendScreen({
   return (
     <div className="grid gap-6 lg:grid-cols-3 max-w-5xl mx-auto w-full py-4 text-left">
       <form className="lg:col-span-2 grid gap-6" onSubmit={onSend}>
-        <Panel animate className="relative overflow-hidden">
+        <Panel animate className="relative z-20">
           <div className="absolute inset-0 bg-gradient-to-br from-purple/5 to-transparent pointer-events-none -z-10" />
           <h2 className="text-xl font-bold font-display text-white mb-4">Send Asset</h2>
           <div className="grid gap-4">
@@ -1006,7 +1006,7 @@ export function ReceiveScreen({
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
   return (
     <section className="mx-auto grid w-full max-w-4xl gap-4 py-4 text-left sm:gap-6 lg:grid-cols-2">
-      <Panel animate className="relative flex flex-col justify-between overflow-hidden p-5 sm:p-6">
+      <Panel animate className="relative z-20 flex flex-col justify-between p-5 sm:p-6">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan/5 to-transparent pointer-events-none -z-10" />
         <div>
           <h2 className="text-xl font-bold font-display text-white mb-4">Receive Assets</h2>
@@ -1114,7 +1114,7 @@ export function HistoryScreen({
         <h2 className="text-3xl font-bold font-display text-white">Transfer History</h2>
         <p className="mt-1.5 text-xs text-slate-400 font-mono">Audit incoming and outgoing wallet transfers.</p>
       </div>
-      <div className="grid gap-3 md:grid-cols-3" data-animate>
+      <div className="grid gap-3 md:grid-cols-3 relative z-20" data-animate>
         <FilterSelect
           label="Asset"
           value={historyFilters.asset}
