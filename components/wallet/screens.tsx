@@ -708,11 +708,11 @@ export function AssetDetailScreen({
   );
 }
 
-const RECENT_RECIPIENTS = [
-  { name: "Alice (EVM Address)", address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" },
-  { name: "Bob (Bitcoin Address)", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
-  { name: "Charlie (Solana Address)", address: "HN7cABvi3M46GNEh2fRJVywryzrc3gKm7DkUpxF4BHr4" }
-];
+export type RecipientContact = {
+  name: string;
+  address: string;
+  chain?: string;
+};
 
 export function SendScreen({
   activeWallet,
@@ -720,6 +720,7 @@ export function SendScreen({
   formError,
   onAssetChange,
   onSend,
+  recentContacts,
   userWallets
 }: {
   activeWallet: Wallet | null;
@@ -727,6 +728,7 @@ export function SendScreen({
   formError: string;
   onAssetChange: (assetId: string) => void;
   onSend: (event: FormEvent<HTMLFormElement>) => void;
+  recentContacts: RecipientContact[];
   userWallets: Wallet[];
 }) {
   const [recipient, setRecipient] = useState("");
@@ -735,6 +737,7 @@ export function SendScreen({
   if (!activeWallet) return null;
   const activeAsset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const holding = activeWallet.assets.find((item) => item.assetId === activeAsset.id);
+  const compatibleContacts = recentContacts.filter((contact) => !contact.chain || contact.chain === activeAsset.chain);
   const internalRecipients = userWallets
     .filter((wallet) => wallet.id !== activeWallet.id)
     .map((wallet) => {
@@ -857,19 +860,25 @@ export function SendScreen({
       {/* Recent Recipients Sidebar */}
       <div className="glass-panel rounded-ui p-5 flex flex-col h-fit" data-animate>
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono mb-4">Recent Contacts</h3>
-        <div className="grid gap-3">
-          {RECENT_RECIPIENTS.map((contact) => (
-            <button
-              key={contact.address}
-              type="button"
-              onClick={() => setRecipient(contact.address)}
-              className="group flex flex-col items-start gap-1 rounded-ui border border-white/5 bg-white/[0.015] p-3 hover:border-cyan/30 hover:bg-cyan/5 transition-all w-full text-left"
-            >
-              <span className="text-xs font-bold text-white group-hover:text-cyan transition-colors">{contact.name}</span>
-              <span className="text-[10px] text-slate-500 font-mono truncate w-full">{contact.address}</span>
-            </button>
-          ))}
-        </div>
+        {compatibleContacts.length ? (
+          <div className="grid gap-3">
+            {compatibleContacts.map((contact) => (
+              <button
+                key={contact.address}
+                type="button"
+                onClick={() => setRecipient(contact.address)}
+                className="group flex flex-col items-start gap-1 rounded-ui border border-white/5 bg-white/[0.015] p-3 hover:border-cyan/30 hover:bg-cyan/5 transition-all w-full text-left"
+              >
+                <span className="text-xs font-bold text-white group-hover:text-cyan transition-colors">{contact.name}</span>
+                <span className="text-[10px] text-slate-500 font-mono truncate w-full">{contact.address}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-ui border border-white/5 bg-white/[0.015] p-3 text-xs leading-relaxed text-slate-500">
+            Contacts appear after you create another wallet or send to an address.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import {
   WalletSetupScreen,
   WalletSuccessScreen
 } from "@/components/wallet/screens";
+import type { RecipientContact } from "@/components/wallet/screens";
 import { BackupModal, LoadingScreen, TransactionModal, CustomCursor } from "@/components/wallet/ui";
 import {
   ASSETS,
@@ -95,6 +96,8 @@ type WalletRuntime = {
   transactions: WalletTransaction[];
 };
 
+type KnownWallet = Pick<Wallet, "id" | "userId" | "name" | "source" | "createdAt" | "accounts">;
+
 export function WalletApp({ initialRoute }: WalletAppProps) {
   void initialRoute;
 
@@ -110,6 +113,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   const [session, setSessionState] = useState<Session | null>(null);
   const [users, setUsers] = useState<UserType[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [knownWallets, setKnownWallets] = useState<KnownWallet[]>([]);
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [activeWalletId, setActiveWalletId] = useState("");
   const [draftPhrase, setDraftPhrase] = useState<string[]>([]);
@@ -134,6 +138,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     const savedActiveWalletId = readText(STORAGE.activeWalletId);
     setSessionState(savedSession);
     setUsers(savedSession?.user ? [savedSession.user] : []);
+    setKnownWallets(readJson<KnownWallet[]>(STORAGE.knownWallets, []));
     setActiveWalletId(savedActiveWalletId);
     setDraftPhrase(readJson<string[]>(STORAGE.draftPhrase, []));
     setPendingTransfer(readJson<PendingTransfer | null>(STORAGE.pendingTransfer, null));
@@ -163,6 +168,39 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     if (!userWallets.length) return null;
     return userWallets.find((wallet) => wallet.id === activeWalletId) ?? userWallets[0];
   }, [activeWalletId, userWallets]);
+
+  const recentContacts = useMemo<RecipientContact[]>(() => {
+    if (!activeWallet) return [];
+    const ownAddresses = new Set(activeWallet.accounts.map((account) => account.address.toLowerCase()));
+    const contacts = new Map<string, RecipientContact>();
+
+    knownWallets.forEach((wallet) => {
+      if (wallet.id === activeWallet.id) return;
+      wallet.accounts.forEach((account) => {
+        const key = account.address.toLowerCase();
+        if (ownAddresses.has(key)) return;
+        contacts.set(key, {
+          name: `${wallet.name} (${account.chain})`,
+          address: account.address,
+          chain: account.chain
+        });
+      });
+    });
+
+    activeWallet.transactions
+      .filter((tx) => tx.type === "outgoing")
+      .forEach((tx) => {
+        const key = tx.to.toLowerCase();
+        if (!tx.to || ownAddresses.has(key) || contacts.has(key)) return;
+        contacts.set(key, {
+          name: `Recent ${assetById(tx.assetId).symbol} recipient`,
+          address: tx.to,
+          chain: assetById(tx.assetId).chain
+        });
+      });
+
+    return Array.from(contacts.values()).slice(0, 8);
+  }, [activeWallet, knownWallets]);
 
   const isPublicRoute = PUBLIC_ROUTES.includes(routeName);
 
@@ -223,6 +261,27 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       };
     });
     writeJson(STORAGE.walletRuntime, nextRuntime);
+    persistKnownWallets(next);
+  }
+
+  function persistKnownWallets(next: Wallet[]) {
+    const existing = readJson<KnownWallet[]>(STORAGE.knownWallets, []);
+    const merged = [...existing];
+    next.forEach((wallet) => {
+      const known: KnownWallet = {
+        id: wallet.id,
+        userId: wallet.userId,
+        name: wallet.name,
+        source: wallet.source,
+        createdAt: wallet.createdAt,
+        accounts: wallet.accounts
+      };
+      const index = merged.findIndex((item) => item.id === wallet.id);
+      if (index >= 0) merged[index] = known;
+      else merged.push(known);
+    });
+    setKnownWallets(merged);
+    writeJson(STORAGE.knownWallets, merged);
   }
 
   function persistEvents(next: SecurityEvent[]) {
@@ -297,6 +356,10 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     return readJson<Record<string, WalletRuntime>>(STORAGE.walletRuntime, {});
   }
 
+  function writeWalletRuntime(walletId: string, runtime: WalletRuntime) {
+    writeJson(STORAGE.walletRuntime, { ...runtimeStore(), [walletId]: runtime });
+  }
+
   function persistWalletPhrase(walletId: string, phrase: string[]) {
     writeJson(STORAGE.walletPhrases, { ...phraseStore(), [walletId]: phrase });
   }
@@ -365,6 +428,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
 
     const nextWallets = walletPayload.wallets.map((wallet) => remoteWalletToWallet(wallet, userId ?? ""));
     setWallets(nextWallets);
+    persistKnownWallets(nextWallets);
     setEvents(
       eventsPayload.events.map((event) => ({
         id: event.id,
@@ -641,11 +705,18 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       hash,
       createdAt: now()
     };
-    const recipientWallet = wallets.find(
+    const recipientAddress = pendingTransfer.recipient.toLowerCase();
+    const recipientCurrentWallet = wallets.find(
       (wallet) =>
         wallet.id !== activeWallet.id &&
-        wallet.accounts.some((account) => account.address.toLowerCase() === pendingTransfer.recipient.toLowerCase())
+        wallet.accounts.some((account) => account.address.toLowerCase() === recipientAddress)
     );
+    const recipientKnownWallet = knownWallets.find(
+      (wallet) =>
+        wallet.id !== activeWallet.id &&
+        wallet.accounts.some((account) => account.address.toLowerCase() === recipientAddress)
+    );
+    const recipientWallet = recipientCurrentWallet ?? recipientKnownWallet;
     const recipientTx: WalletTransaction | null = recipientWallet
       ? {
           id: uid("tx"),
@@ -669,10 +740,9 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       ),
       transactions: [tx, ...activeWallet.transactions]
     };
-    persistWallets(
-      wallets.map((wallet) => {
+    const nextWallets = wallets.map((wallet) => {
         if (wallet.id === activeWallet.id) return nextWallet;
-        if (recipientWallet && recipientTx && wallet.id === recipientWallet.id && status === "success") {
+        if (recipientCurrentWallet && recipientTx && wallet.id === recipientCurrentWallet.id && status === "success") {
           return {
             ...wallet,
             assets: wallet.assets.map((holding) =>
@@ -684,8 +754,27 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           };
         }
         return wallet;
-      })
-    );
+      });
+    persistWallets(nextWallets);
+
+    if (!recipientCurrentWallet && recipientKnownWallet && recipientTx && status === "success") {
+      const existingRuntime = runtimeStore()[recipientKnownWallet.id] ?? {
+        assets: ASSETS.map((item, index) => ({
+          assetId: item.id,
+          balance: 0,
+          favorite: index < 2
+        })),
+        transactions: []
+      };
+      writeWalletRuntime(recipientKnownWallet.id, {
+        assets: existingRuntime.assets.map((holding) =>
+          holding.assetId === pendingTransfer.assetId
+            ? { ...holding, balance: roundBalance(holding.balance + pendingTransfer.amount) }
+            : holding
+        ),
+        transactions: [recipientTx, ...existingRuntime.transactions]
+      });
+    }
     const result: TransferResult = {
       status,
       hash,
@@ -967,6 +1056,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           formError={formError}
           onAssetChange={(assetId) => router.push(`/send?asset=${assetId}`)}
           onSend={handleSend}
+          recentContacts={recentContacts}
           userWallets={userWallets}
         />
       );
