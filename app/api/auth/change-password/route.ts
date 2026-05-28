@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getBearerUser, getSupabaseAdmin } from "@/lib/supabase/server";
+import { getBearerUser, getSupabaseAdmin, getSupabaseUserClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -11,9 +11,9 @@ export async function POST(request: Request) {
   const auth = await getBearerUser(request);
   if ("error" in auth) return auth.error;
 
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabaseUserClient(auth.token);
   if (!supabase) {
-    return Response.json({ error: "Supabase is not configured." }, { status: 503 });
+    return Response.json({ error: "Supabase auth is not configured." }, { status: 503 });
   }
 
   const parsed = changePasswordSchema.safeParse(await request.json().catch(() => null));
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { error } = await supabase.auth.admin.updateUserById(auth.user.id, {
+  const { error } = await supabase.auth.updateUser({
     password: parsed.data.password
   });
 
@@ -29,7 +29,8 @@ export async function POST(request: Request) {
     return Response.json({ error: error.message }, { status: 400 });
   }
 
-  await supabase.from("security_events").insert({
+  const admin = getSupabaseAdmin();
+  await admin?.from("security_events").insert({
     user_id: auth.user.id,
     event_type: "password changed",
     detail: "Password updated from settings."

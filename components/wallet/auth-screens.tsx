@@ -12,8 +12,6 @@ import { RealWalletAnimation } from "@/components/wallet/real-wallet";
 type AuthScreensProps = {
   route: string;
   formError: string;
-  pendingResetEmail: string;
-  pendingResetCode: string;
   onRegister: (event: FormEvent<HTMLFormElement>) => void;
   onLogin: (event: FormEvent<HTMLFormElement>) => void;
   onForgot: (event: FormEvent<HTMLFormElement>) => void;
@@ -23,8 +21,6 @@ type AuthScreensProps = {
 export function AuthScreens({
   route,
   formError,
-  pendingResetEmail,
-  pendingResetCode,
   onRegister,
   onLogin,
   onForgot,
@@ -166,14 +162,7 @@ export function AuthScreens({
           {route === "login" && <LoginScreen formError={formError} onLogin={onLogin} />}
           {route === "register" && <RegisterScreen formError={formError} onRegister={onRegister} />}
           {route === "forgot" && <ForgotScreen formError={formError} onForgot={onForgot} />}
-          {route === "reset" && (
-            <ResetScreen
-              formError={formError}
-              pendingResetCode={pendingResetCode}
-              pendingResetEmail={pendingResetEmail}
-              onReset={onReset}
-            />
-          )}
+          {route === "reset" && <ResetScreen formError={formError} onReset={onReset} />}
         </div>
       </section>
     </>
@@ -258,13 +247,13 @@ function ForgotScreen({
   onForgot: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <AuthCard title="Reset Password" subtitle="Request a profile decryption recovery code.">
+    <AuthCard title="Reset Password" subtitle="Send a secure password reset link to your email.">
       <form className="grid gap-4 mt-2" onSubmit={onForgot}>
         <Field label="Email Address" name="email" type="email" placeholder="you@domain.com" icon={Mail} required />
         <FormError message={formError} />
         <button className={`${buttonPrimary} mt-2 w-full`} type="submit">
           <KeyRound className="h-4 w-4" />
-          Generate Reset Code
+          Send Reset Link
         </button>
       </form>
       <div className="h-px bg-white/5 my-2" />
@@ -277,22 +266,14 @@ function ForgotScreen({
 
 function ResetScreen({
   formError,
-  pendingResetEmail,
-  pendingResetCode,
   onReset
 }: {
   formError: string;
-  pendingResetEmail: string;
-  pendingResetCode: string;
   onReset: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <AuthCard title="Update Password" subtitle={`Verification code: ${pendingResetCode || "generate one first"}`}>
+    <AuthCard title="Update Password" subtitle="Enter your new password after opening the reset link from your email.">
       <form className="grid gap-4 mt-2" onSubmit={onReset}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Email Address" name="email" type="email" placeholder="you@domain.com" defaultValue={pendingResetEmail} icon={Mail} required />
-          <Field label="Reset Code" name="code" placeholder="6-digit code" icon={KeyRound} required />
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="New Password" name="password" type="password" placeholder="At least 8 characters" icon={Lock} required />
           <Field label="Confirm New Password" name="confirmPassword" type="password" placeholder="Repeat new password" icon={Lock} required />

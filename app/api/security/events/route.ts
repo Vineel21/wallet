@@ -1,4 +1,4 @@
-import { getBearerUser, getSupabaseAdmin } from "@/lib/supabase/server";
+import { getBearerUser, getSupabaseUserClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -6,9 +6,9 @@ export async function GET(request: Request) {
   const auth = await getBearerUser(request);
   if ("error" in auth) return auth.error;
 
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabaseUserClient(auth.token);
   if (!supabase) {
-    return Response.json({ error: "Supabase is not configured." }, { status: 503 });
+    return Response.json({ error: "Supabase auth is not configured." }, { status: 503 });
   }
 
   const { data, error } = await supabase

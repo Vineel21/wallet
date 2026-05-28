@@ -1214,7 +1214,7 @@ export function ProfileScreen({
         <h2 className="text-xl font-bold font-display text-white mb-4 font-display">Profile Details</h2>
         <div className="grid gap-3">
           <Field label="Name" name="name" placeholder="Ada Lovelace" defaultValue={currentUser.name} required />
-          <Field label="Email" name="email" type="email" placeholder="you@domain.com" defaultValue={currentUser.email} required />
+          <Field label="Email" name="email" type="email" placeholder="you@domain.com" defaultValue={currentUser.email} readOnly />
           <Field label="Account state" name="verified" defaultValue="Supabase authenticated" readOnly />
           <FormError message={formError} />
         </div>

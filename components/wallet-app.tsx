@@ -62,6 +62,7 @@ import {
   sendSchema
 } from "@/lib/validation";
 import { addSecurityEvent } from "@/lib/wallet-service";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 gsap.registerPlugin(useGSAP);
 
@@ -404,52 +405,49 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     }
   }
 
-  function handleForgot(event: FormEvent<HTMLFormElement>) {
+  async function handleForgot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     try {
       const data = resetRequestSchema.parse(parseForm(event.currentTarget));
-      if (!users.some((user) => user.email === data.email.toLowerCase())) {
-        setFormError("No local account exists for that email.");
-        return;
-      }
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      writeText(STORAGE.pendingResetEmail, data.email.toLowerCase());
-      writeText(STORAGE.pendingResetCode, code);
-      toast(`Reset code ${code} created.`);
-      router.push("/reset");
+      await apiJson("/api/auth/password-reset", {
+        method: "POST",
+        body: JSON.stringify({ email: data.email.toLowerCase() })
+      });
+      toast("Password reset link sent.");
+      router.push("/login");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
-  function handleReset(event: FormEvent<HTMLFormElement>) {
+  async function handleReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     try {
       const data = resetConfirmSchema.parse(parseForm(event.currentTarget));
-      const pendingEmail = readText(STORAGE.pendingResetEmail);
-      const pendingCode = readText(STORAGE.pendingResetCode);
-      if (pendingEmail !== data.email.toLowerCase() || pendingCode !== data.code) {
-        setFormError("Reset code does not match.");
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+
+      if (!accessToken || !refreshToken) {
+        setFormError("Open the password reset link from your email before setting a new password.");
         return;
       }
-      persistUsers(
-        users.map((user) =>
-          user.email === data.email.toLowerCase()
-            ? {
-                ...user,
-                password: data.password
-              }
-            : user
-        )
-      );
-      removeStorage(STORAGE.pendingResetEmail);
-      removeStorage(STORAGE.pendingResetCode);
+      const supabase = createBrowserSupabaseClient();
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      });
+      if (sessionError) throw sessionError;
+
+      const { error } = await supabase.auth.updateUser({ password: data.password });
+      if (error) throw error;
+
       toast("Password reset.");
       router.push("/login");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
@@ -613,22 +611,30 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     router.push("/transfer-result");
   }
 
-  function handleProfile(event: FormEvent<HTMLFormElement>) {
+  async function handleProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
-    if (!currentUser) return;
+    if (!currentUser || !session?.accessToken) return;
     try {
       const data = profileSchema.parse(parseForm(event.currentTarget));
-      const email = data.email.toLowerCase();
-      if (users.some((user) => user.email === email && user.id !== currentUser.id)) {
-        setFormError("Another local account uses that email.");
-        return;
-      }
-      persistUsers(users.map((user) => (user.id === currentUser.id ? { ...user, name: data.name, email } : user)));
-      logEvent("profile updated", "Profile name or email changed.");
+      const payload = await apiJson<{ profile: { name: string; email: string; email_verified: boolean } }>("/api/profile", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ name: data.name })
+      });
+      const nextUser = {
+        ...currentUser,
+        name: payload.profile.name,
+        email: payload.profile.email,
+        emailVerified: payload.profile.email_verified
+      };
+      const nextSession = { ...session, user: nextUser };
+      persistSession(nextSession);
+      setUsers([nextUser]);
+      logEvent("profile updated", "Profile name changed.");
       toast("Profile saved.");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
@@ -750,8 +756,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           <AuthScreens
             route={routeName}
             formError={formError}
-            pendingResetEmail={readText(STORAGE.pendingResetEmail)}
-            pendingResetCode={readText(STORAGE.pendingResetCode)}
             onRegister={handleRegister}
             onLogin={handleLogin}
             onForgot={handleForgot}

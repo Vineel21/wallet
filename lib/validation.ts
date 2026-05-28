@@ -23,8 +23,6 @@ export const resetRequestSchema = z.object({
 
 export const resetConfirmSchema = z
   .object({
-    email: z.string().email("Enter a valid email."),
-    code: z.string().min(4, "Enter the reset code."),
     password: z.string().min(8, "Password must be at least 8 characters."),
     confirmPassword: z.string().min(8, "Confirm your password.")
   })
