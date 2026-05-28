@@ -92,7 +92,8 @@ export function CryptoGlobe() {
 
       // Sphere details
       const center = { x: width / 2, y: height / 2 };
-      const radius = Math.min(width, height) * 0.32;
+      const isMobile = width < 640;
+      const radius = Math.min(width, height) * (isMobile ? 0.22 : 0.32);
       const dist = 600; // perspective depth
 
       // 2. Slow auto rotation if not dragging & not hovering
@@ -210,12 +211,12 @@ export function CryptoGlobe() {
         token.angle += tokenAngleSpeed;
 
         // Base orbiting radius
-        const orbitRadius = radius + 40 + token.radiusOffset;
+        const orbitRadius = radius + (isMobile ? 25 : 40) + token.radiusOffset * (isMobile ? 0.5 : 1.0);
         
         // 3D position
         const tx = orbitRadius * Math.cos(token.angle);
         const tz = orbitRadius * Math.sin(token.angle);
-        const ty = token.heightOffset;
+        const ty = token.heightOffset * (isMobile ? 0.75 : 1.0);
 
         // Rotate token around Y-axis (globe rotation)
         const txY = tx * Math.cos(rotY) - tz * Math.sin(rotY);
@@ -237,7 +238,7 @@ export function CryptoGlobe() {
         
         // Make front tokens much larger and bright, back tokens smaller and faded
         const opacity = gsap.utils.interpolate(0.12, 1.0, depth);
-        const scale = gsap.utils.interpolate(0.65, 1.15, depth);
+        const scale = gsap.utils.interpolate(0.65, 1.15, depth) * (isMobile ? 0.72 : 1.0);
         const zIndex = Math.round(100 + tzX);
 
         return {

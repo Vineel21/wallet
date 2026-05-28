@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "380px"
+      },
       fontFamily: {
         syne: ["var(--font-syne)", "sans-serif"],
         space: ["var(--font-space)", "sans-serif"],

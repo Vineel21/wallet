@@ -152,10 +152,67 @@ export function AuthScreens({
         <div className="w-full max-w-[540px] mx-auto z-10" data-animate>
           {/* Brand Icon Header inside form (only visible on mobile layout) */}
           <div className="flex flex-col items-center mb-6 text-center select-none lg:hidden">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl border border-cyan/40 bg-cyan/10 text-xl font-black text-cyan shadow-cyanGlow mb-3">
-              W
-            </span>
-            <h1 className="text-2xl font-bold font-display text-white">Wallax Wallet</h1>
+            {/* Real Wallet pocket animation & Orbit rings inside a compact, responsive container! */}
+            <div className="relative w-full h-[180px] sm:h-[220px] flex items-center justify-center pointer-events-auto scale-[0.55] sm:scale-[0.65] origin-center -my-10">
+              {/* Orbit rings */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
+                <svg className="w-[300px] h-[300px] text-white/5" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="0.5"
+                    strokeDasharray="4 8"
+                    className="orbit-ring-outer"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="0.5"
+                    strokeDasharray="2 4"
+                    className="orbit-ring-mid"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="0.5"
+                    strokeDasharray="1 6"
+                    className="orbit-ring-inner"
+                  />
+                </svg>
+              </div>
+
+              {/* Real Wallet Pocket (New Animation) */}
+              <div className="relative w-[340px] h-[340px] z-10 flex items-center justify-center">
+                <RealWalletAnimation />
+              </div>
+
+              {/* Floating Cryptographic Assets / Tokens */}
+              {/* Bitcoin Token */}
+              <div className="coin-btc absolute top-[20%] left-[20%] h-10 w-10 rounded-full border border-amber/35 bg-amber/10 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)] flex items-center justify-center flex-col z-20">
+                <span className="text-[8px] text-amber font-bold font-mono">BTC</span>
+              </div>
+
+              {/* Ethereum Token */}
+              <div className="coin-eth absolute bottom-[18%] right-[18%] h-10 w-10 rounded-full border border-purple/35 bg-purple/10 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.15)] flex items-center justify-center flex-col z-20">
+                <span className="text-[8px] text-purple-300 font-bold font-mono">ETH</span>
+              </div>
+
+              {/* Solana Token */}
+              <div className="coin-sol absolute top-[28%] right-[16%] h-10 w-10 rounded-full border border-cyan/35 bg-cyan/10 backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.15)] flex items-center justify-center flex-col z-20">
+                <span className="text-[8px] text-cyan font-bold font-mono">SOL</span>
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-bold font-display text-white mt-2">Wallax Wallet</h1>
             <p className="text-xs text-slate-500 font-mono mt-1 uppercase tracking-widest">Decentralized Gateway</p>
           </div>
 

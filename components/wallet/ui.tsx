@@ -319,7 +319,7 @@ export function Warning({ title, tone, children }: { title: string; tone: "amber
 
 export function WordGrid({ words }: { words: string[] }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
       {words.map((word, index) => (
         <div className="thin-panel flex min-h-11 items-center gap-2 rounded-ui px-3 py-2" data-float-in key={`${word}-${index}`}>
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black text-slate-400">

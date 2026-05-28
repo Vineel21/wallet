@@ -173,7 +173,7 @@ export function LandingPage() {
             >
               <div 
                 ref={cardRef}
-                className="relative w-[340px] xs:w-[380px] sm:w-[480px] h-[220px] sm:h-[280px] rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow"
+                className="relative w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[480px] h-[220px] sm:h-[280px] rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow"
               >
                 <div className="w-full h-full rounded-[11px] bg-[#050814] p-6 sm:p-8 flex flex-col justify-between backdrop-blur-md relative overflow-hidden text-left">
                   {/* Sheen backdrop */}
@@ -210,13 +210,13 @@ export function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="z-10">
+                  <div className="z-10 min-w-0">
                     {/* Interactive Copyable Address */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-mono text-slate-400 select-all">bc1qj7vzn203sm0glqyhxt9x89p3mevdq4z7972hcs</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[10px] xs:text-xs sm:text-sm font-mono text-slate-400 select-all truncate">bc1qj7vzn203sm0glqyhxt9x89p3mevdq4z7972hcs</span>
                       <button 
                         onClick={handleCopyAddress}
-                        className="p-1.5 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan/40 hover:text-cyan transition-all duration-200"
+                        className="p-1.5 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 hover:border-cyan/40 hover:text-cyan transition-all duration-200 shrink-0"
                         title="Copy Address"
                       >
                         {copied ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
