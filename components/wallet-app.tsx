@@ -28,14 +28,15 @@ import {
 } from "@/components/wallet/screens";
 import { BackupModal, LoadingScreen, TransactionModal, CustomCursor } from "@/components/wallet/ui";
 import {
+  ASSETS,
   assetById,
+  deriveAccounts,
   estimateFee,
   fakeHash,
   generateMnemonic,
   now,
   roundBalance,
   uid,
-  shortAddress
 } from "@/lib/mock-data";
 import { readJson, readText, removeStorage, STORAGE, writeJson, writeText } from "@/lib/storage";
 import {
@@ -60,12 +61,31 @@ import {
   revealPhraseSchema,
   sendSchema
 } from "@/lib/validation";
-import { addSecurityEvent, createSession, createUser, createWallet, seedDemoAccount } from "@/lib/wallet-service";
+import { addSecurityEvent } from "@/lib/wallet-service";
 
 gsap.registerPlugin(useGSAP);
 
 type WalletAppProps = {
   initialRoute: string[];
+};
+
+type RemoteWallet = {
+  id: string;
+  name: string;
+  source: "created" | "imported";
+  created_at: string;
+  wallet_accounts?: Array<{
+    id: string;
+    chain: string;
+    address: string;
+  }>;
+};
+
+type RemoteSecurityEvent = {
+  id: string;
+  event_type: string;
+  detail: string | null;
+  created_at: string;
 };
 
 export function WalletApp({ initialRoute }: WalletAppProps) {
@@ -103,20 +123,27 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   const [toasts, setToasts] = useState<Array<{ id: string; message: string }>>([]);
 
   useEffect(() => {
-    seedDemoAccount();
-    setUsers(readJson<UserType[]>(STORAGE.users, []));
-    setWallets(readJson<Wallet[]>(STORAGE.wallets, []));
-    setEvents(readJson<SecurityEvent[]>(STORAGE.events, []));
-    setSessionState(readJson<Session | null>(STORAGE.session, null));
-    setActiveWalletId(readText(STORAGE.activeWalletId));
+    const savedSession = readJson<Session | null>(STORAGE.session, null);
+    const savedActiveWalletId = readText(STORAGE.activeWalletId);
+    setSessionState(savedSession);
+    setUsers(savedSession?.user ? [savedSession.user] : []);
+    setActiveWalletId(savedActiveWalletId);
     setDraftPhrase(readJson<string[]>(STORAGE.draftPhrase, []));
     setPendingTransfer(readJson<PendingTransfer | null>(STORAGE.pendingTransfer, null));
     setLastTransfer(readJson<TransferResult | null>(STORAGE.lastTransfer, null));
-    setHydrated(true);
+
+    if (!savedSession?.accessToken) {
+      setHydrated(true);
+      return;
+    }
+
+    void loadRemoteData(savedSession.accessToken, savedSession.user?.id, savedActiveWalletId).finally(() => {
+      setHydrated(true);
+    });
   }, []);
 
   const currentUser = useMemo(
-    () => (session ? users.find((user) => user.id === session.userId) ?? null : null),
+    () => session?.user ?? (session ? users.find((user) => user.id === session.userId) ?? null : null),
     [session, users]
   );
 
@@ -180,7 +207,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
 
   function persistWallets(next: Wallet[]) {
     setWallets(next);
-    writeJson(STORAGE.wallets, next);
   }
 
   function persistEvents(next: SecurityEvent[]) {
@@ -228,51 +254,148 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     persistEvents(addSecurityEvent(events, currentUser.id, type, detail));
   }
 
+  function authHeaders(token = session?.accessToken): Record<string, string> {
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const response = await fetch(path, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init.headers ?? {})
+      }
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(typeof payload.error === "string" ? payload.error : "Request failed.");
+    }
+    return payload as T;
+  }
+
+  function phraseStore() {
+    return readJson<Record<string, string[]>>(STORAGE.walletPhrases, {});
+  }
+
+  function persistWalletPhrase(walletId: string, phrase: string[]) {
+    writeJson(STORAGE.walletPhrases, { ...phraseStore(), [walletId]: phrase });
+  }
+
+  function remoteWalletToWallet(remote: RemoteWallet, userId = currentUser?.id ?? ""): Wallet {
+    const phrases = phraseStore();
+    return {
+      id: remote.id,
+      userId,
+      name: remote.name,
+      phrase: phrases[remote.id] ?? [],
+      source: remote.source,
+      createdAt: remote.created_at,
+      accounts: (remote.wallet_accounts ?? []).map((account) => ({
+        id: account.id,
+        chain: account.chain,
+        address: account.address
+      })),
+      assets: ASSETS.map((asset, index) => ({
+        assetId: asset.id,
+        balance: 0,
+        favorite: index < 2
+      })),
+      transactions: []
+    };
+  }
+
+  async function loadRemoteData(token: string, userId = currentUser?.id, preferredWalletId = activeWalletId) {
+    const [walletPayload, eventsPayload] = await Promise.all([
+      apiJson<{ wallets: RemoteWallet[] }>("/api/wallets", {
+        headers: authHeaders(token)
+      }),
+      apiJson<{ events: RemoteSecurityEvent[] }>("/api/security/events", {
+        headers: authHeaders(token)
+      }).catch(() => ({ events: [] }))
+    ]);
+
+    const nextWallets = walletPayload.wallets.map((wallet) => remoteWalletToWallet(wallet, userId ?? ""));
+    setWallets(nextWallets);
+    setEvents(
+      eventsPayload.events.map((event) => ({
+        id: event.id,
+        userId: userId ?? "",
+        type: event.event_type,
+        detail: event.detail ?? "",
+        createdAt: event.created_at
+      }))
+    );
+
+    if (nextWallets.length) {
+      const nextActive = nextWallets.some((wallet) => wallet.id === preferredWalletId)
+        ? preferredWalletId
+        : nextWallets[0].id;
+      updateActiveWallet(nextActive);
+    }
+
+    return nextWallets;
+  }
+
+  async function authenticate(email: string, password: string) {
+    const payload = await apiJson<{
+      user: { id: string; email: string; name: string; emailVerified: boolean };
+      session: { accessToken: string; expiresAt: string | null };
+    }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+    const user: UserType = {
+      id: payload.user.id,
+      name: payload.user.name,
+      email: payload.user.email,
+      emailVerified: payload.user.emailVerified,
+      createdAt: now()
+    };
+    const nextSession: Session = {
+      userId: user.id,
+      accessToken: payload.session.accessToken,
+      user,
+      startedAt: now(),
+      expiresAt: payload.session.expiresAt ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
+    };
+    persistSession(nextSession);
+    setUsers([user]);
+    const remoteWallets = await loadRemoteData(payload.session.accessToken, user.id);
+    return { user, session: nextSession, wallets: remoteWallets };
+  }
+
   function parseForm(form: HTMLFormElement) {
     return Object.fromEntries(Array.from(new FormData(form)).map(([key, value]) => [key, String(value).trim()]));
   }
 
-  function handleRegister(event: FormEvent<HTMLFormElement>) {
+  async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     try {
       const data = registerSchema.parse(parseForm(event.currentTarget));
       const email = data.email.toLowerCase();
-      if (users.some((user) => user.email === email)) {
-        setFormError("An account already exists for this email.");
-        return;
-      }
-      const user = createUser(data.name, email, data.password);
-      persistUsers([...users, user]);
-      const nextSession = createSession(user.id);
-      setSessionState(nextSession);
-      writeJson(STORAGE.session, nextSession);
-      persistEvents(addSecurityEvent(events, user.id, "account registered", "Local prototype account created."));
+      await apiJson("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ name: data.name, email, password: data.password })
+      });
+      await authenticate(email, data.password);
       toast("Account created.");
       router.push("/wallet-setup");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     try {
       const data = loginSchema.parse(parseForm(event.currentTarget));
-      const user = users.find((item) => item.email === data.email.toLowerCase() && item.password === data.password);
-      if (!user) {
-        setFormError("Email or password is incorrect.");
-        return;
-      }
-      const nextSession = createSession(user.id);
-      persistSession(nextSession);
-      persistEvents(addSecurityEvent(events, user.id, "login", "Browser session opened."));
-      const wallet = wallets.find((item) => item.userId === user.id);
+      const auth = await authenticate(data.email.toLowerCase(), data.password);
       toast("Logged in.");
-      router.push(wallet ? "/dashboard" : "/wallet-setup");
+      router.push(auth.wallets.length ? "/dashboard" : "/wallet-setup");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
@@ -332,10 +455,10 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     router.push("/create-wallet");
   }
 
-  function handleConfirmPhrase(event: FormEvent<HTMLFormElement>) {
+  async function handleConfirmPhrase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
-    if (!currentUser || !draftPhrase.length) return;
+    if (!currentUser || !draftPhrase.length || !session?.accessToken) return;
     const data = parseForm(event.currentTarget);
     const checks = [1, 5, 9];
     const valid = checks.every((index) => data[`word${index}`] === draftPhrase[index]);
@@ -343,20 +466,38 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       setFormError("One or more selected words do not match.");
       return;
     }
-    const wallet = createWallet(currentUser.id, "Primary Wallet", draftPhrase, "created");
-    persistWallets([...wallets, wallet]);
-    updateActiveWallet(wallet.id);
-    removeStorage(STORAGE.draftPhrase);
-    setDraftPhrase([]);
-    logEvent("wallet created", `${wallet.name} added.`);
-    toast("Wallet created.");
-    router.push("/wallet-success");
+    try {
+      const accounts = deriveAccounts(draftPhrase).map((account) => ({
+        chain: account.chain,
+        address: account.address
+      }));
+      const payload = await apiJson<{ wallet: RemoteWallet }>("/api/wallets", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          name: "Primary Wallet",
+          source: "created",
+          accounts
+        })
+      });
+      persistWalletPhrase(payload.wallet.id, draftPhrase);
+      const wallet = remoteWalletToWallet(payload.wallet, currentUser.id);
+      wallet.phrase = draftPhrase;
+      persistWallets([wallet, ...wallets]);
+      updateActiveWallet(wallet.id);
+      removeStorage(STORAGE.draftPhrase);
+      setDraftPhrase([]);
+      toast("Wallet created.");
+      router.push("/wallet-success");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Unable to create wallet.");
+    }
   }
 
-  function handleImportWallet(event: FormEvent<HTMLFormElement>) {
+  async function handleImportWallet(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
-    if (!currentUser) return;
+    if (!currentUser || !session?.accessToken) return;
     try {
       const data = importWalletSchema.parse(parseForm(event.currentTarget));
       const words = data.phrase.split(/\s+/).filter(Boolean);
@@ -364,14 +505,28 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         setFormError("Enter at least 12 words.");
         return;
       }
-      const wallet = createWallet(currentUser.id, data.walletName || "Imported Wallet", words, "imported");
-      persistWallets([...wallets, wallet]);
+      const accounts = deriveAccounts(words).map((account) => ({
+        chain: account.chain,
+        address: account.address
+      }));
+      const payload = await apiJson<{ wallet: RemoteWallet }>("/api/wallets", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          name: data.walletName || "Imported Wallet",
+          source: "imported",
+          accounts
+        })
+      });
+      persistWalletPhrase(payload.wallet.id, words);
+      const wallet = remoteWalletToWallet(payload.wallet, currentUser.id);
+      wallet.phrase = words;
+      persistWallets([wallet, ...wallets]);
       updateActiveWallet(wallet.id);
-      logEvent("wallet imported", `${wallet.name} added.`);
       toast("Wallet imported.");
       router.push("/wallet-success");
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
@@ -402,12 +557,14 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     }
   }
 
-  function handleReview(event: FormEvent<HTMLFormElement>) {
+  async function handleReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTransferError("");
     if (!currentUser || !activeWallet || !pendingTransfer) return;
     const password = String(new FormData(event.currentTarget).get("password") ?? "");
-    if (currentUser.password !== password) {
+    try {
+      await authenticate(currentUser.email, password);
+    } catch {
       setTransferError("Password confirmation failed.");
       return;
     }
@@ -470,32 +627,40 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     }
   }
 
-  function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
+  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     if (!currentUser) return;
     try {
       const data = passwordSchema.parse(parseForm(event.currentTarget));
-      if (data.currentPassword !== currentUser.password) {
+      try {
+        await authenticate(currentUser.email, data.currentPassword);
+      } catch {
         setFormError("Current password is incorrect.");
         return;
       }
-      persistUsers(users.map((user) => (user.id === currentUser.id ? { ...user, password: data.password } : user)));
+      await apiJson("/api/auth/change-password", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ password: data.password })
+      });
       logEvent("password changed", "Password changed from settings.");
       toast("Password changed.");
       event.currentTarget.reset();
     } catch (error) {
-      setFormError(firstZodError(error));
+      setFormError(error instanceof Error ? error.message : firstZodError(error));
     }
   }
 
-  function handleRevealPhrase(event: FormEvent<HTMLFormElement>) {
+  async function handleRevealPhrase(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
     if (!currentUser) return;
     try {
       const data = revealPhraseSchema.parse(parseForm(event.currentTarget));
-      if (data.password !== currentUser.password) {
+      try {
+        await authenticate(currentUser.email, data.password);
+      } catch {
         setFormError("Password confirmation failed.");
         return;
       }
@@ -534,80 +699,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       )
     };
     persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
-  }
-
-  function handleClaimFaucet() {
-    if (!activeWallet) return;
-    const claimAmounts: Record<string, number> = {
-      eth: 1.5,
-      btc: 0.08,
-      matic: 500,
-      usdc: 1000,
-      sol: 25,
-      bnb: 3
-    };
-    const tx: WalletTransaction = {
-      id: uid("tx"),
-      assetId: "eth",
-      type: "incoming",
-      status: "success",
-      amount: 1.5,
-      fee: "0.0001 ETH",
-      from: "Testnet Faucet",
-      to: activeWallet.accounts[0]?.address ?? "0x0000000000000000000000000000000000000000",
-      hash: fakeHash(),
-      createdAt: now()
-    };
-    const nextWallet: Wallet = {
-      ...activeWallet,
-      assets: activeWallet.assets.map((holding) => ({
-        ...holding,
-        balance: roundBalance(holding.balance + (claimAmounts[holding.assetId] || 0))
-      })),
-      transactions: [tx, ...activeWallet.transactions]
-    };
-    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
-    logEvent("faucet claimed", "Credited active wallet with testnet tokens.");
-    toast("Faucet claimed successfully!");
-  }
-
-  function handleSimulateReceive(assetId: string, amount: number) {
-    if (!activeWallet) return;
-    const asset = assetById(assetId);
-    const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
-    
-    const randomSender = asset.chain === "Bitcoin" 
-      ? `bc1q${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}` 
-      : asset.chain === "Solana"
-        ? Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12)
-        : `0x${Math.random().toString(16).slice(2, 12)}${Math.random().toString(16).slice(2, 12)}fd87b5a8`;
-
-    const tx: WalletTransaction = {
-      id: uid("tx"),
-      assetId,
-      type: "incoming",
-      status: "success",
-      amount,
-      fee: `0 ${asset.symbol}`,
-      from: randomSender,
-      to: account.address,
-      hash: fakeHash(),
-      createdAt: now()
-    };
-
-    const nextWallet: Wallet = {
-      ...activeWallet,
-      assets: activeWallet.assets.map((holding) =>
-        holding.assetId === assetId
-          ? { ...holding, balance: roundBalance(holding.balance + amount) }
-          : holding
-      ),
-      transactions: [tx, ...activeWallet.transactions]
-    };
-
-    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
-    logEvent("received simulated transfer", `Received ${amount} ${asset.symbol} from ${shortAddress(randomSender)}.`);
-    toast(`Received ${amount} ${asset.symbol}!`);
   }
 
   function copyText(value: string, label = "Copied.") {
@@ -766,7 +857,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           onAssetChange={(assetId) => router.push(`/receive?asset=${assetId}`)}
           onCopyText={copyText}
           onShareText={shareText}
-          onSimulateReceive={handleSimulateReceive}
         />
       );
     }
@@ -806,7 +896,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         onCreateWallet={startCreateWallet}
         onCopyAddress={copyText}
         onOpenTransaction={setSelectedTxId}
-        onClaimFaucet={handleClaimFaucet}
       />
     );
   }

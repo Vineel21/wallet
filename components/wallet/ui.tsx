@@ -86,7 +86,7 @@ export function LoadingScreen() {
         </div>
         <div className="text-center">
           <h3 className="text-lg font-bold font-display text-white">Decrypting Workspace</h3>
-          <p className="mt-1.5 text-xs text-slate-400 font-mono">Initializing mock cryptography...</p>
+          <p className="mt-1.5 text-xs text-slate-400 font-mono">Initializing secure wallet session...</p>
         </div>
       </div>
     </main>
@@ -463,7 +463,7 @@ export function BackupModal({ onClose }: { onClose: () => void }) {
         </div>
         <h2 className="text-xl font-black">Backup warning</h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          This prototype stores demo words in browser storage. In a real wallet, protect the recovery phrase offline and never share it.
+          Recovery words remain on this device. Protect the phrase offline and never share it.
         </p>
         <button className={`${buttonPrimary} mt-5`} onClick={onClose}>
           I understand

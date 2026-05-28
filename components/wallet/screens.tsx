@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BadgeCheck,
   CheckCircle2,
-  CircleDollarSign,
   Clock3,
   Copy,
   Download,
@@ -81,7 +80,7 @@ export function WalletSetupScreen({ onCreateWallet }: { onCreateWallet: () => vo
           <div>
             <h2 className="text-xl font-bold font-display text-white">Create New Wallet</h2>
             <p className="mt-2 text-xs leading-relaxed text-slate-400">
-              Generate a unique 12-word cryptographic seed phrase to instantiate your local sandbox.
+              Generate a unique 12-word recovery phrase for this wallet.
             </p>
           </div>
           <ShieldCheck className="h-6 w-6 text-purple" />
@@ -97,7 +96,7 @@ export function WalletSetupScreen({ onCreateWallet }: { onCreateWallet: () => vo
           <div>
             <h2 className="text-xl font-bold font-display text-white">Import Existing Wallet</h2>
             <p className="mt-2 text-xs leading-relaxed text-slate-400">
-              Enter your own sandbox backup mnemonic phrase to decrypt your balances locally.
+              Enter an existing recovery phrase to restore wallet addresses locally.
             </p>
           </div>
           <Import className="h-6 w-6 text-cyan" />
@@ -209,7 +208,7 @@ export function ImportWalletScreen({
   return (
     <form className="grid gap-6 max-w-3xl mx-auto w-full text-left py-4" onSubmit={onImportWallet}>
       <Warning tone="rose" title="Security Warning:">
-        Only enter prototype demo phrases. Never paste real production recovery phrases into this application.
+        Do not import high-value production wallets into an MVP build. Use a fresh wallet until audits are complete.
       </Warning>
       <Panel animate>
         <h2 className="text-xl font-bold font-display text-white">Import Mnemonic Vault</h2>
@@ -246,7 +245,7 @@ export function WalletSuccessScreen() {
     <div className="max-w-2xl mx-auto w-full py-12 text-left">
       <EmptyState
         title="Vault Decrypted & Ready"
-        text="Your mock sandbox wallet is initialized. We have seeded accounts with testnet mock balances and transactions."
+        text="Your wallet metadata is stored in Supabase. Recovery words remain on this device."
         icon={CheckCircle2}
         actions={
           <>
@@ -436,7 +435,7 @@ export function HolographicWalletCard({ wallet, onCopyAddress }: { wallet: Walle
               <div>
                 <h4 className="text-xs font-bold font-display text-white">Deposit QR</h4>
                 <p className="text-[9px] text-slate-400 mt-1 max-w-[120px] leading-relaxed">
-                  Scan to deposit EVM tokens in sandbox wallet.
+                  Scan to deposit EVM tokens to this wallet.
                 </p>
               </div>
               <div className="text-[8px] text-slate-500 font-mono">
@@ -489,14 +488,12 @@ export function DashboardScreen({
   activeWallet,
   onCreateWallet,
   onCopyAddress,
-  onOpenTransaction,
-  onClaimFaucet
+  onOpenTransaction
 }: {
   activeWallet: Wallet | null;
   onCreateWallet: () => void;
   onCopyAddress: (address: string) => void;
   onOpenTransaction: (transactionId: string) => void;
-  onClaimFaucet: () => void;
 }) {
   const [timeframe, setTimeframe] = useState<"1D" | "1W" | "1M" | "1Y" | "ALL">("1M");
 
@@ -522,7 +519,7 @@ export function DashboardScreen({
                 </span>
               </div>
               <p className="mt-2 text-xs text-slate-400 font-mono">
-                Aggregated holdings across {activeWallet.assets.length} active sandbox chains.
+                Aggregated holdings across {activeWallet.assets.length} supported chains.
               </p>
             </div>
             <div className="w-full sm:w-auto flex justify-center">
@@ -563,15 +560,7 @@ export function DashboardScreen({
         <div className="grid grid-cols-2 gap-3">
           <QuickActionPortal href="/send" icon={Send} label="Send" theme="purple" />
           <QuickActionPortal href="/receive" icon={Download} label="Receive" theme="cyan" />
-          <button 
-            className="group flex flex-col items-center justify-center gap-3 rounded-ui border border-white/5 bg-white/[0.015] p-5 text-center transition-all hover:border-pink/30 hover:bg-pink/[0.04] hover:scale-[1.03] active:scale-[0.97] duration-300" 
-            onClick={onClaimFaucet}
-          >
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-pink/10 text-pink border border-pink/20 group-hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] transition-all duration-300">
-              <CircleDollarSign className="h-5 w-5" />
-            </span>
-            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors font-outfit">Claim Faucet</span>
-          </button>
+          <QuickActionPortal href="/settings" icon={ShieldCheck} label="Security" theme="purple" />
           <QuickActionPortal href="/history" icon={History} label="History" theme="amber" />
         </div>
       </div>
@@ -626,7 +615,7 @@ export function AssetsPageScreen({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between" data-animate>
         <div>
           <h2 className="text-3xl font-bold font-display text-white">Assets</h2>
-          <p className="mt-1.5 text-xs text-slate-400 font-mono">Search, audit, and bookmark mock chain holdings.</p>
+          <p className="mt-1.5 text-xs text-slate-400 font-mono">Search, audit, and bookmark wallet holdings.</p>
         </div>
         <label className="relative block w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -660,7 +649,7 @@ export function AssetDetailScreen({
     return (
       <EmptyState
         title="Asset not found"
-        text="Open the assets page to choose a supported demo asset."
+        text="Open the assets page to choose a supported asset."
         icon={AlertTriangle}
         actions={
           <Link className={buttonPrimary} href="/assets">
@@ -928,7 +917,7 @@ export function TransferResultScreen({ lastTransfer }: { lastTransfer: TransferR
     return (
       <EmptyState
         title="No transfer result"
-        text="Completed mock transfers will land here."
+        text="Completed transfers will land here."
         icon={Clock3}
         actions={
           <Link className={buttonPrimary} href="/send">
@@ -965,18 +954,14 @@ export function ReceiveScreen({
   assetId,
   onAssetChange,
   onCopyText,
-  onShareText,
-  onSimulateReceive
+  onShareText
 }: {
   activeWallet: Wallet | null;
   assetId: string;
   onAssetChange: (assetId: string) => void;
   onCopyText: (value: string) => void;
   onShareText: (value: string) => void;
-  onSimulateReceive: (assetId: string, amount: number) => void;
 }) {
-  const [simAmount, setSimAmount] = useState("1.0");
-
   if (!activeWallet) return null;
   const asset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
@@ -1000,43 +985,6 @@ export function ReceiveScreen({
                 <button className={`${buttonSecondary} !min-h-0 h-9 px-3`} onClick={() => onCopyText(account.address)} type="button">
                   <Copy className="h-3.5 w-3.5" />
                   Copy
-                </button>
-              </div>
-            </div>
-
-            <div className="h-px bg-white/5 my-3" />
-            
-            {/* Simulate Transfer Panel */}
-            <div className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Simulate Incoming Transfer</span>
-              <p className="text-[11px] text-slate-500 leading-normal mb-1">
-                Instantly mock a transaction sending funds to this address to verify your dashboard update.
-              </p>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="number"
-                    step="any"
-                    className="focus-ring min-h-[42px] w-full rounded-ui border border-white/10 bg-black/40 px-3.5 text-xs text-white"
-                    placeholder="Amount to receive..."
-                    value={simAmount}
-                    onChange={(e) => setSimAmount(e.target.value)}
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase font-mono">
-                    {asset.symbol}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const amt = parseFloat(simAmount);
-                    if (isNaN(amt) || amt <= 0) return;
-                    onSimulateReceive(asset.id, amt);
-                  }}
-                  className={`${buttonPrimary} !min-h-[42px] px-4 py-2 text-xs`}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Simulate
                 </button>
               </div>
             </div>
@@ -1090,7 +1038,7 @@ export function HistoryScreen({
     <section className="grid gap-6 text-left max-w-4xl mx-auto w-full py-4">
       <div data-animate>
         <h2 className="text-3xl font-bold font-display text-white">Transfer History</h2>
-        <p className="mt-1.5 text-xs text-slate-400 font-mono">Audit incoming and outgoing sandbox transfers.</p>
+        <p className="mt-1.5 text-xs text-slate-400 font-mono">Audit incoming and outgoing wallet transfers.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-3" data-animate>
         <FilterSelect
@@ -1183,7 +1131,7 @@ export function SettingsScreen({
           <Badge status="pending">Local only</Badge>
         </div>
         <div className="grid gap-2">
-          <StaticRow icon={Smartphone} title="Current browser" subtitle="Local storage sandbox session" badge={<Badge status="success">active</Badge>} />
+          <StaticRow icon={Smartphone} title="Current browser" subtitle="Supabase authenticated session" badge={<Badge status="success">active</Badge>} />
           <StaticRow icon={Fingerprint} title="WebAuthn hardware key" subtitle="Hardware authentication simulation" badge={<Badge status="pending">planned</Badge>} />
         </div>
         <div className="mt-6 flex flex-wrap gap-2">
@@ -1267,7 +1215,7 @@ export function ProfileScreen({
         <div className="grid gap-3">
           <Field label="Name" name="name" placeholder="Ada Lovelace" defaultValue={currentUser.name} required />
           <Field label="Email" name="email" type="email" placeholder="you@domain.com" defaultValue={currentUser.email} required />
-          <Field label="Decryption state" name="verified" defaultValue="Mock decrypted (Local Sandbox)" readOnly />
+          <Field label="Account state" name="verified" defaultValue="Supabase authenticated" readOnly />
           <FormError message={formError} />
         </div>
       </Panel>

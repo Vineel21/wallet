@@ -30,7 +30,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Wallax Wallet MVP",
-  description: "A safe mock wallet prototype built with Next.js, Tailwind, and GSAP."
+  description: "A wallet MVP built with Next.js, Supabase, Tailwind, and GSAP."
 };
 
 export default function RootLayout({

@@ -159,31 +159,11 @@ export function createWalletForUser(
   
   const assets = ASSETS.map((asset, index) => ({
     assetId: asset.id,
-    balance: getDeterministicBalance(asset.id, phrase),
+    balance: 0,
     favorite: index < 2
   }));
 
   const transactions: WalletTransaction[] = [];
-  assets.forEach((holding) => {
-    if (holding.balance > 0) {
-      const asset = assetById(holding.assetId);
-      const account = accounts.find((acct) => acct.chain === asset.chain) ?? accounts[0];
-      transactions.push({
-        id: uid("tx"),
-        assetId: holding.assetId,
-        type: "incoming",
-        status: "success",
-        amount: holding.balance,
-        fee: `0 ${asset.symbol}`,
-        from: "Wallax Genesis Faucet",
-        to: account.address,
-        hash: fakeHash(),
-        createdAt: offsetDate(-1)
-      });
-    }
-  });
-
-  transactions.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return {
     id: uid("wallet"),
@@ -224,10 +204,10 @@ export function demoWallet(userId: string): Wallet {
     accounts: deriveAccounts(phrase),
     assets: ASSETS.map((asset, index) => ({
       assetId: asset.id,
-      balance: asset.balance,
+      balance: 0,
       favorite: index < 2
     })),
-    transactions: seedTransactions(phrase)
+    transactions: []
   };
 }
 

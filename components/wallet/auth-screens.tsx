@@ -227,7 +227,7 @@ function LoginScreen({
     <AuthCard title="Unlock Wallet" subtitle="Enter your profile credentials to decrypt your storage ledger.">
       <form className="grid gap-4 mt-2" onSubmit={onLogin}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Email Address" name="email" type="email" placeholder="demo@wallax.local" icon={Mail} required />
+          <Field label="Email Address" name="email" type="email" placeholder="you@example.com" icon={Mail} required />
           <Field label="Password" name="password" type="password" placeholder="••••••••" icon={Lock} required />
         </div>
         <FormError message={formError} />

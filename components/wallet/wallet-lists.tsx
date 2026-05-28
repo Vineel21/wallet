@@ -55,7 +55,7 @@ const MOCK_CHANGES: Record<string, { percent: string; positive: boolean }> = {
 
 export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
   if (!holdings.length) {
-    return <EmptyState title="No assets" text="Demo holdings will appear after wallet setup." icon={WalletCards} />;
+    return <EmptyState title="No assets" text="Assets will appear after wallet setup." icon={WalletCards} />;
   }
 
   return (
@@ -142,7 +142,7 @@ export function TxList({
   onOpenTransaction: (transactionId: string) => void;
 }) {
   if (!transactions.length) {
-    return <EmptyState title="No transactions" text="Mock sends and receives appear here." icon={History} />;
+    return <EmptyState title="No transactions" text="Confirmed wallet activity will appear here." icon={History} />;
   }
 
   return (

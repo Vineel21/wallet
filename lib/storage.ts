@@ -7,6 +7,7 @@ export const STORAGE = {
   pendingTransfer: "wallax.pendingTransfer",
   lastTransfer: "wallax.lastTransfer",
   activeWalletId: "wallax.activeWalletId",
+  walletPhrases: "wallax.walletPhrases",
   pendingResetEmail: "wallax.pendingResetEmail",
   pendingResetCode: "wallax.pendingResetCode"
 } as const;

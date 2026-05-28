@@ -12,13 +12,15 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   emailVerified: boolean;
   createdAt: string;
 };
 
 export type Session = {
   userId: string;
+  accessToken?: string;
+  user?: User;
   startedAt: string;
   expiresAt: string;
 };
