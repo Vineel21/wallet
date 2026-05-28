@@ -1,36 +1,51 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import gsap from "gsap";
 
 export function RealWalletAnimation() {
   const [hovered, setHovered] = useState(false);
   const walletRef = useRef<HTMLDivElement>(null);
+  const pointerActiveRef = useRef(false);
+  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mouse tilt tracking
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  useEffect(() => {
+    return () => {
+      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current);
+    };
+  }, []);
+
+  const clearRevealTimeout = () => {
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
+  };
+
+  // Pointer tilt tracking works for desktop hover and mobile touch.
+  const tiltWallet = (clientX: number, clientY: number, isTouch = false) => {
     const wallet = walletRef.current;
     if (!wallet) return;
     const rect = wallet.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     
     // Normalize coordinates (-0.5 to 0.5)
     const px = (x / rect.width) - 0.5;
     const py = (y / rect.height) - 0.5;
+    const maxTilt = window.innerWidth < 640 ? 16 : 24;
     
     gsap.to(wallet, {
-      rotateX: -py * 24,
-      rotateY: px * 24,
+      rotateX: -py * maxTilt,
+      rotateY: px * maxTilt,
       transformPerspective: 1000,
       ease: "power2.out",
-      duration: 0.3
+      duration: isTouch ? 0.16 : 0.3
     });
   };
 
-  const handleMouseLeave = () => {
-    setHovered(false);
+  const resetWalletTilt = () => {
     const wallet = walletRef.current;
     if (!wallet) return;
     gsap.to(wallet, {
@@ -41,21 +56,64 @@ export function RealWalletAnimation() {
     });
   };
 
-  const handleMouseEnter = () => {
+  const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse") return;
+    clearRevealTimeout();
     setHovered(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" && !pointerActiveRef.current) return;
+    tiltWallet(e.clientX, e.clientY, e.pointerType !== "mouse");
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    clearRevealTimeout();
+    pointerActiveRef.current = true;
+    setHovered(true);
+
+    if (e.pointerType !== "mouse") {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+
+    tiltWallet(e.clientX, e.clientY, e.pointerType !== "mouse");
+  };
+
+  const handlePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerActiveRef.current = false;
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+
+    resetWalletTilt();
+
+    if (e.pointerType !== "mouse") {
+      revealTimeoutRef.current = setTimeout(() => setHovered(false), 900);
+    }
+  };
+
+  const handlePointerLeave = () => {
+    pointerActiveRef.current = false;
+    clearRevealTimeout();
+    setHovered(false);
+    resetWalletTilt();
   };
 
   return (
     <div 
-      className="relative w-full h-[320px] sm:h-[340px] flex items-center justify-center select-none"
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      className="relative flex h-[320px] w-full touch-pan-y select-none items-center justify-center sm:h-[340px]"
+      onPointerCancel={handlePointerEnd}
+      onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
     >
       {/* Dynamic 3D Wallet Structure */}
       <div 
         ref={walletRef}
-        className="relative w-[280px] h-[190px] preserve-3d cursor-pointer"
+        className="relative h-[190px] w-[280px] preserve-3d cursor-pointer will-change-transform"
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Wallet Back Leather Fold */}

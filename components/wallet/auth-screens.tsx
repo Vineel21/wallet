@@ -50,7 +50,7 @@ export function AuthScreens({
         <div className="absolute bottom-1/4 right-1/3 w-72 h-72 rounded-full bg-cyan/5 blur-[90px] pointer-events-none -z-10" />
 
         {/* Top brand heading */}
-        <div className="flex items-center gap-3 select-none">
+        <Link href="/" className="flex w-fit items-center gap-3 select-none rounded-ui transition-opacity hover:opacity-85 focus-ring">
           <span className="grid h-10 w-10 place-items-center rounded-xl border border-cyan/40 bg-cyan/10 text-lg font-black text-cyan shadow-cyanGlow">
             W
           </span>
@@ -58,7 +58,7 @@ export function AuthScreens({
             <strong className="leading-none text-white tracking-wider font-display text-lg">Wallax</strong>
             <span className="text-[10px] font-semibold text-slate-500 font-mono uppercase tracking-wider">Self-Custody</span>
           </span>
-        </div>
+        </Link>
 
         {/* Animation Arena */}
         <div className="flex-1 flex flex-col items-center justify-center relative py-12 select-none">
@@ -151,12 +151,12 @@ export function AuthScreens({
 
         <div className="w-full max-w-[540px] mx-auto z-10" data-animate>
           {/* Brand Icon Header inside form (only visible on mobile layout) */}
-          <div className="flex flex-col items-center mb-6 text-center select-none lg:hidden">
+          <div className="flex flex-col items-center mb-5 text-center select-none lg:hidden">
             {/* Real Wallet pocket animation & Orbit rings inside a compact, responsive container! */}
-            <div className="relative w-full h-[180px] sm:h-[220px] flex items-center justify-center pointer-events-auto scale-[0.55] sm:scale-[0.65] origin-center -my-10">
+            <div className="relative mx-auto -mt-5 -mb-1 flex h-[250px] w-full max-w-[360px] origin-center scale-[0.82] items-center justify-center overflow-visible pointer-events-auto sm:h-[280px] sm:scale-90">
               {/* Orbit rings */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
-                <svg className="w-[300px] h-[300px] text-white/5" viewBox="0 0 100 100">
+                <svg className="h-[320px] w-[320px] text-white/5 sm:h-[360px] sm:w-[360px]" viewBox="0 0 100 100">
                   <circle
                     cx="50"
                     cy="50"
@@ -191,29 +191,31 @@ export function AuthScreens({
               </div>
 
               {/* Real Wallet Pocket (New Animation) */}
-              <div className="relative w-[340px] h-[340px] z-10 flex items-center justify-center">
+              <div className="relative z-10 flex h-[320px] w-[320px] items-center justify-center">
                 <RealWalletAnimation />
               </div>
 
               {/* Floating Cryptographic Assets / Tokens */}
               {/* Bitcoin Token */}
-              <div className="coin-btc absolute top-[20%] left-[20%] h-10 w-10 rounded-full border border-amber/35 bg-amber/10 backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.15)] flex items-center justify-center flex-col z-20">
+              <div className="coin-btc absolute left-[16%] top-[18%] z-20 flex h-12 w-12 flex-col items-center justify-center rounded-full border border-amber/35 bg-amber/10 shadow-[0_0_20px_rgba(245,158,11,0.15)] backdrop-blur-md">
                 <span className="text-[8px] text-amber font-bold font-mono">BTC</span>
               </div>
 
               {/* Ethereum Token */}
-              <div className="coin-eth absolute bottom-[18%] right-[18%] h-10 w-10 rounded-full border border-purple/35 bg-purple/10 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.15)] flex items-center justify-center flex-col z-20">
+              <div className="coin-eth absolute bottom-[16%] right-[16%] z-20 flex h-12 w-12 flex-col items-center justify-center rounded-full border border-purple/35 bg-purple/10 shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md">
                 <span className="text-[8px] text-purple-300 font-bold font-mono">ETH</span>
               </div>
 
               {/* Solana Token */}
-              <div className="coin-sol absolute top-[28%] right-[16%] h-10 w-10 rounded-full border border-cyan/35 bg-cyan/10 backdrop-blur-md shadow-[0_0_20px_rgba(6,182,212,0.15)] flex items-center justify-center flex-col z-20">
+              <div className="coin-sol absolute right-[13%] top-[27%] z-20 flex h-12 w-12 flex-col items-center justify-center rounded-full border border-cyan/35 bg-cyan/10 shadow-[0_0_20px_rgba(6,182,212,0.15)] backdrop-blur-md">
                 <span className="text-[8px] text-cyan font-bold font-mono">SOL</span>
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold font-display text-white mt-2">Wallax Wallet</h1>
-            <p className="text-xs text-slate-500 font-mono mt-1 uppercase tracking-widest">Decentralized Gateway</p>
+            <Link href="/" className="group mt-2 rounded-ui px-2 py-1 focus-ring">
+              <h1 className="text-2xl font-bold font-display text-white transition-colors group-hover:text-cyan">Wallax Wallet</h1>
+              <p className="text-xs text-slate-500 font-mono mt-1 uppercase tracking-widest transition-colors group-hover:text-slate-300">Decentralized Gateway</p>
+            </Link>
           </div>
 
           {route === "login" && <LoginScreen formError={formError} onLogin={onLogin} />}
