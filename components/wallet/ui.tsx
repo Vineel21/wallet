@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  Check,
   ChevronDown,
   ChevronRight,
   LucideIcon,
@@ -7,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import QRCode from "qrcode";
-import { type ReactNode, type SelectHTMLAttributes, useEffect, useState } from "react";
+import React, { type ReactNode, type SelectHTMLAttributes, useEffect, useRef, useState } from "react";
 import { assetById, formatDate } from "@/lib/mock-data";
 import type { WalletTransaction } from "@/lib/types";
 import { buttonGhost, buttonPrimary } from "@/components/wallet/constants";
@@ -394,23 +395,227 @@ export function SelectControl({
   wrapperClassName?: string;
   children: ReactNode;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
+
+  // Extract options from children
+  const options = React.Children.toArray(children)
+    .map((child) => {
+      if (React.isValidElement(child)) {
+        const elementProps = child.props as { value?: any; children?: any; disabled?: boolean };
+        if (child.type === "option" || elementProps?.value !== undefined) {
+          return {
+            value: String(elementProps.value ?? ""),
+            label: String(elementProps.children ?? ""),
+            disabled: !!elementProps.disabled,
+          };
+        }
+      }
+      return null;
+    })
+    .filter(Boolean) as Array<{ value: string; label: string; disabled: boolean }>;
+
+  // Derive value (hybrid controlled/uncontrolled)
+  const isControlled = props.value !== undefined;
+  const [localValue, setLocalValue] = useState(props.defaultValue ?? "");
+  const activeValue = isControlled ? props.value : localValue;
+
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  // Sync index on open
+  useEffect(() => {
+    if (isOpen) {
+      const idx = options.findIndex((opt) => String(opt.value) === String(activeValue));
+      setFocusedIndex(idx >= 0 ? idx : 0);
+    }
+  }, [isOpen, activeValue, options]);
+
+  // Click away handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (val: string) => {
+    setIsOpen(false);
+    if (!isControlled) {
+      setLocalValue(val);
+    }
+
+    if (selectRef.current) {
+      // Programmatically update value on hidden native select
+      const nativeSelectValueSetter = Object.getOwnPropertyDescriptor(
+        HTMLSelectElement.prototype,
+        "value"
+      )?.set;
+      if (nativeSelectValueSetter) {
+        nativeSelectValueSetter.call(selectRef.current, val);
+      } else {
+        selectRef.current.value = val;
+      }
+      // Trigger onChange event
+      const event = new Event("change", { bubbles: true });
+      selectRef.current.dispatchEvent(event);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev + 1) % options.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev - 1 + options.length) % options.length);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (focusedIndex >= 0 && focusedIndex < options.length) {
+        const opt = options[focusedIndex];
+        if (!opt.disabled) {
+          handleSelect(opt.value);
+        }
+      }
+    }
+  };
+
+  const selectedOption = options.find((opt) => String(opt.value) === String(activeValue)) ?? options[0];
+
+  const renderTriggerLabel = (lbl: string) => {
+    const match = String(lbl).match(/^([A-Za-z0-9]+)\s*-\s*([^(]+)\(available\s*([^)]+)\)$/);
+    if (match) {
+      const [, symbol, , balance] = match;
+      return (
+        <div className="flex items-center justify-between w-full mr-2">
+          <span className="font-bold text-white text-sm">{symbol}</span>
+          <span className="text-[11px] font-mono text-cyan bg-cyan/5 px-2 py-0.5 rounded border border-cyan/10">
+            {balance.trim()}
+          </span>
+        </div>
+      );
+    }
+    return <span className="truncate">{lbl}</span>;
+  };
+
+  const renderOptionLabel = (lbl: string) => {
+    const match = String(lbl).match(/^([A-Za-z0-9]+)\s*-\s*([^(]+)\(available\s*([^)]+)\)$/);
+    if (match) {
+      const [, symbol, name, balance] = match;
+      return (
+        <div className="flex items-center justify-between w-full text-left">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-white text-sm">{symbol}</span>
+            <span className="text-slate-400 text-xs">— {name.trim()}</span>
+          </div>
+          <span className="text-[10px] font-mono text-cyan bg-cyan/5 px-1.5 py-0.5 rounded border border-cyan/10">
+            {balance.trim()}
+          </span>
+        </div>
+      );
+    }
+    return <span className="truncate">{lbl}</span>;
+  };
+
   return (
-    <label className={`grid min-w-0 gap-1.5 text-left ${wrapperClassName}`}>
+    <div className={`relative grid gap-1.5 text-left ${wrapperClassName}`} ref={containerRef}>
       {label && (
         <span className="pl-1 text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
           {label}
         </span>
       )}
-      <span className="relative block min-w-0">
+
+      <div className="relative block">
+        {/* Hidden native select for compatibility */}
         <select
+          ref={selectRef}
           {...props}
-          className={`focus-ring min-h-[46px] w-full min-w-0 cursor-pointer appearance-none rounded-ui border border-white/10 bg-[#080d1a]/85 py-2.5 pl-3.5 pr-10 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 hover:border-cyan/35 hover:bg-[#0f1624] focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow ${className}`}
+          value={activeValue}
+          onChange={props.onChange}
+          style={{ display: "none" }}
+          aria-hidden="true"
+          tabIndex={-1}
         >
           {children}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-      </span>
-    </label>
+
+        {/* Custom trigger button */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          onKeyDown={handleKeyDown}
+          className={`focus-ring flex min-h-[46px] w-full min-w-0 cursor-pointer items-center justify-between rounded-ui border border-white/10 bg-[#080d1a]/85 py-2.5 pl-3.5 pr-4 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 hover:border-cyan/35 hover:bg-[#0f1624] focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow ${className} ${
+            isOpen ? "border-cyan/50 bg-[#080d1a] shadow-cyanGlow" : ""
+          }`}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          {...(props.title ? { title: props.title } : {})}
+        >
+          {selectedOption ? renderTriggerLabel(selectedOption.label) : <span className="text-slate-500">Choose option...</span>}
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300 ${
+              isOpen ? "rotate-180 text-cyan" : ""
+            }`}
+          />
+        </button>
+
+        {/* Custom dropdown list */}
+        {isOpen && (
+          <div
+            className="glass-panel absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto rounded-ui border border-white/10 bg-[#090d16]/95 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-50 animate-dropdown-in"
+            role="listbox"
+          >
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-slate-500 font-mono text-center">No options</div>
+            ) : (
+              options.map((option, index) => {
+                const isSelected = String(option.value) === String(activeValue);
+                const isFocused = index === focusedIndex;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option.value)}
+                    className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                      isSelected
+                        ? "bg-purple/20 text-white shadow-glow"
+                        : isFocused
+                          ? "bg-white/[0.06] text-white"
+                          : "text-slate-300 hover:bg-white/[0.04] hover:text-white"
+                    } ${option.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    disabled={option.disabled}
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {renderOptionLabel(option.label)}
+                    </div>
+                    {isSelected && (
+                      <Check className="ml-2 h-4 w-4 shrink-0 text-cyan animate-scale-up" />
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
