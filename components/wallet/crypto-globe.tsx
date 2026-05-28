@@ -319,7 +319,7 @@ export function CryptoGlobe() {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[380px] sm:h-[480px] md:h-[500px] flex items-center justify-center select-none cursor-grab active:cursor-grabbing overflow-visible"
+      className="relative h-[320px] w-full max-w-full touch-pan-y select-none cursor-grab active:cursor-grabbing overflow-hidden sm:h-[480px] md:h-[500px]"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUpOrLeave}

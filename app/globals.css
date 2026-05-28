@@ -26,12 +26,17 @@
 
 html {
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
   background: var(--bg);
+  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   background:
     radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.11), transparent 45%),
@@ -41,6 +46,13 @@ body {
   color: var(--text);
   font-family: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+}
+
+@supports (overflow-x: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {

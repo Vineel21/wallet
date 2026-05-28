@@ -84,14 +84,14 @@ export function LandingPage() {
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className="min-h-screen text-slate-100 flex flex-col font-outfit relative bg-[#03050c] wallet-grid-bg">
+    <div ref={containerRef} className="min-h-screen max-w-full overflow-x-hidden text-slate-100 flex flex-col font-outfit relative bg-[#03050c] wallet-grid-bg">
       {/* Decorative Blur Orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-purple/10 blur-[120px] pointer-events-none -z-10 animate-pulse" />
       <div className="absolute top-1/3 right-1/4 w-80 h-80 rounded-full bg-cyan/5 blur-[100px] pointer-events-none -z-10" />
 
       {/* Header */}
-      <header className="landing-header sticky top-0 z-50 border-b border-white/5 bg-ink/75 px-6 py-4 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+      <header className="landing-header sticky top-0 z-50 border-b border-white/5 bg-ink/75 px-3 py-3 backdrop-blur-xl sm:px-6 sm:py-4">
+        <div className="mx-auto flex max-w-7xl min-w-0 items-center justify-between gap-2">
           <Brand title="WALLAX" subtitle="Crypto Wallet" />
           
           <div className="hidden items-center gap-6 lg:flex font-mono text-xs text-slate-400">
@@ -103,12 +103,13 @@ export function LandingPage() {
             <span>Non-Custodial Gateway</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link href="/login" className={`${buttonSecondary} !min-h-[38px] px-4`}>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link href="/login" className={`${buttonSecondary} !min-h-[36px] !px-3 !py-2 !text-xs sm:!min-h-[38px] sm:!px-4 sm:!text-sm`}>
               Unlock
             </Link>
-            <Link href="/register" className={`${buttonPrimary} !min-h-[38px] px-4`}>
-              Create Wallet
+            <Link href="/register" className={`${buttonPrimary} !min-h-[36px] !px-3 !py-2 !text-xs sm:!min-h-[38px] sm:!px-4 sm:!text-sm`}>
+              <span className="sm:hidden">Create</span>
+              <span className="hidden sm:inline">Create Wallet</span>
             </Link>
           </div>
         </div>
@@ -116,12 +117,12 @@ export function LandingPage() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="mx-auto max-w-7xl px-6 py-12 lg:py-24 grid gap-12 lg:grid-cols-2 items-center">
+        <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:py-24">
           {/* Hero Content */}
           <div className="flex flex-col items-start gap-6">
-            <div className="hero-tag inline-flex items-center gap-2 rounded-full border border-cyan/20 bg-cyan/5 px-3 py-1.5 text-xs font-bold text-cyan uppercase tracking-wider">
-              <Zap className="h-3.5 w-3.5 fill-cyan/20" />
-              True self-custody. True crypto freedom.
+            <div className="hero-tag inline-flex max-w-full items-center gap-2 rounded-full border border-cyan/20 bg-cyan/5 px-3 py-1.5 text-[11px] font-bold text-cyan uppercase tracking-wider sm:text-xs">
+              <Zap className="h-3.5 w-3.5 shrink-0 fill-cyan/20" />
+              <span className="min-w-0 whitespace-normal leading-snug">True self-custody. True crypto freedom.</span>
             </div>
             
             <h1 className="hero-title font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight text-white text-left">
@@ -164,28 +165,28 @@ export function LandingPage() {
           </div>
 
           {/* Hero Visual Card */}
-          <div className="hero-visual flex flex-col items-center justify-center lg:justify-self-end w-full">
+          <div className="hero-visual flex w-full min-w-0 flex-col items-center justify-center lg:justify-self-end">
             {/* 3D Tilting Card */}
             <div 
-              className="perspective-1000 preserve-3d cursor-pointer"
+              className="perspective-1000 preserve-3d w-full max-w-[340px] cursor-pointer xs:max-w-[380px] sm:max-w-[480px]"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
               <div 
                 ref={cardRef}
-                className="relative w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[480px] h-[220px] sm:h-[280px] rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow"
+                className="relative h-[270px] w-full rounded-ui bg-gradient-to-br from-purple via-pink to-cyan p-[1.5px] shadow-glow sm:h-[280px]"
               >
-                <div className="w-full h-full rounded-[11px] bg-[#050814] p-6 sm:p-8 flex flex-col justify-between backdrop-blur-md relative overflow-hidden text-left">
+                <div className="w-full h-full rounded-[11px] bg-[#050814] p-4 xs:p-5 sm:p-8 flex flex-col justify-between backdrop-blur-md relative overflow-hidden text-left">
                   {/* Sheen backdrop */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-purple/10 via-cyan/10 to-transparent pointer-events-none" />
                   <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-cyan/5 blur-3xl pointer-events-none" />
                   
                   <div className="flex justify-between items-start z-10">
                     <div>
-                      <span className="text-[11px] font-bold text-cyan/85 tracking-widest font-mono uppercase">Multi-Chain Security Pass</span>
+                      <span className="text-[10px] font-bold text-cyan/85 tracking-widest font-mono uppercase sm:text-[11px]">Multi-Chain Security Pass</span>
                       <h4 className="text-xl sm:text-2xl font-black font-display text-white mt-1.5">Personal Account</h4>
                     </div>
-                    <span className="h-11 w-11 rounded-ui border border-white/10 bg-white/5 flex items-center justify-center font-display text-white font-black text-base shadow-inner">W</span>
+                    <span className="h-10 w-10 shrink-0 rounded-ui border border-white/10 bg-white/5 flex items-center justify-center font-display text-white font-black text-base shadow-inner sm:h-11 sm:w-11">W</span>
                   </div>
 
                   {/* EMV Card Chip & Contacts Graphic */}
@@ -226,9 +227,9 @@ export function LandingPage() {
                     <div className="flex justify-between items-end mt-2.5">
                       <div>
                         <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono block">Total Portfolio</span>
-                        <span className="text-2xl sm:text-3.5xl font-black text-white font-display block leading-none mt-1 shadow-glow">$42,918.64 <span className="text-xs sm:text-sm text-slate-500 font-mono font-normal">USD</span></span>
+                        <span className="text-xl xs:text-2xl sm:text-3.5xl font-black text-white font-display block leading-none mt-1 shadow-glow">$42,918.64 <span className="text-xs sm:text-sm text-slate-500 font-mono font-normal">USD</span></span>
                       </div>
-                      <span className="text-xs font-mono text-mint font-bold flex items-center gap-1 bg-mint/5 px-2.5 py-1 rounded-full border border-mint/20 shadow-glow">
+                      <span className="shrink-0 text-[11px] font-mono text-mint font-bold flex items-center gap-1 bg-mint/5 px-2 py-1 rounded-full border border-mint/20 shadow-glow sm:text-xs sm:px-2.5">
                         <BadgeCheck className="h-3.5 w-3.5" />
                         Secured
                       </span>
@@ -241,11 +242,11 @@ export function LandingPage() {
         </section>
 
         {/* Globe Section */}
-        <section className="border-t border-white/5 bg-[#04060f]/60 py-20 px-6 relative overflow-hidden">
+        <section className="border-t border-white/5 bg-[#04060f]/60 py-16 px-4 relative overflow-hidden sm:px-6 sm:py-20">
           {/* Neon background effect */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-cyan/5 blur-[120px] pointer-events-none -z-10 animate-pulse" />
           
-          <div className="mx-auto max-w-7xl grid gap-12 lg:grid-cols-12 items-center">
+          <div className="mx-auto grid max-w-7xl min-w-0 items-center gap-10 lg:grid-cols-12 lg:gap-12">
             {/* Left Content Column */}
             <div className="lg:col-span-5 flex flex-col items-start gap-6 text-left">
               <div className="inline-flex items-center gap-2 rounded-full border border-purple/20 bg-purple/5 px-3 py-1.5 text-xs font-bold text-purple uppercase tracking-wider">
@@ -290,7 +291,7 @@ export function LandingPage() {
             </div>
 
             {/* Right Globe Column */}
-            <div className="lg:col-span-7 flex justify-center w-full relative">
+            <div className="lg:col-span-7 flex justify-center w-full min-w-0 relative overflow-hidden">
               <CryptoGlobe />
             </div>
           </div>

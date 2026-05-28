@@ -109,13 +109,13 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
 
 export function Brand({ title = "Wallax", subtitle }: { title?: string; subtitle: string }) {
   return (
-    <Link className="flex w-fit items-center gap-3 group text-left" href="/">
-      <span className="grid h-11 w-11 place-items-center rounded-ui border border-purple/40 bg-purple/10 text-xl font-bold font-display text-white shadow-glow group-hover:border-pink group-hover:text-pink transition-all duration-300">
+    <Link className="flex min-w-0 w-fit items-center gap-2.5 sm:gap-3 group text-left" href="/">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-ui border border-purple/40 bg-purple/10 text-lg font-bold font-display text-white shadow-glow group-hover:border-pink group-hover:text-pink transition-all duration-300 sm:h-11 sm:w-11 sm:text-xl">
         W
       </span>
-      <span className="grid gap-0.5 text-left">
-        <strong className="leading-none text-white tracking-wider font-display text-lg">{title}</strong>
-        <span className="text-xs font-semibold text-slate-500 font-mono uppercase tracking-wider">{subtitle}</span>
+      <span className="grid min-w-0 gap-0.5 text-left">
+        <strong className="truncate leading-none text-white tracking-wider font-display text-base sm:text-lg">{title}</strong>
+        <span className="truncate text-[10px] font-semibold text-slate-500 font-mono uppercase tracking-wider sm:text-xs">{subtitle}</span>
       </span>
     </Link>
   );
