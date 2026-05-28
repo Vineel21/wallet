@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, LogOut, Plus, Unlock, User } from "lucide-react";
+import { Lock, LogOut, Plus, Unlock, User, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import type { Wallet } from "@/lib/types";
 import { buttonGhost, buttonSecondary, mobileNavItems, navItems } from "@/components/wallet/constants";
@@ -74,18 +74,21 @@ export function Topbar({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {userWallets.length > 0 && (
-          <select
-            className="focus-ring min-h-10 rounded-ui border border-white/5 bg-[#0f1624]/60 px-3 text-sm font-bold text-white hover:border-cyan/40 transition-colors"
-            value={activeWallet?.id ?? activeWalletId}
-            onChange={(event) => onWalletChange(event.target.value)}
-            title="Wallet selector"
-          >
-            {userWallets.map((wallet) => (
-              <option key={wallet.id} value={wallet.id}>
-                {wallet.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              className="focus-ring min-h-10 rounded-ui border border-white/5 bg-[#0f1624]/60 pl-3 pr-8 text-sm font-bold text-white hover:border-cyan/40 hover:bg-[#0f1624]/90 transition-all appearance-none cursor-pointer"
+              value={activeWallet?.id ?? activeWalletId}
+              onChange={(event) => onWalletChange(event.target.value)}
+              title="Wallet selector"
+            >
+              {userWallets.map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>
+                  {wallet.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          </div>
         )}
         <button className="focus-ring grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-slate-300 hover:text-white hover:border-purple/40 hover:shadow-glow transition-all" onClick={onToggleLock} title="Lock wallet">
           {walletLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}

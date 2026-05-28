@@ -535,6 +535,41 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
   }
 
+  function handleClaimFaucet() {
+    if (!activeWallet) return;
+    const claimAmounts: Record<string, number> = {
+      eth: 1.5,
+      btc: 0.08,
+      matic: 500,
+      usdc: 1000,
+      sol: 25,
+      bnb: 3
+    };
+    const tx: WalletTransaction = {
+      id: uid("tx"),
+      assetId: "eth",
+      type: "incoming",
+      status: "success",
+      amount: 1.5,
+      fee: "0.0001 ETH",
+      from: "Testnet Faucet",
+      to: activeWallet.accounts[0]?.address ?? "0x0000000000000000000000000000000000000000",
+      hash: fakeHash(),
+      createdAt: now()
+    };
+    const nextWallet: Wallet = {
+      ...activeWallet,
+      assets: activeWallet.assets.map((holding) => ({
+        ...holding,
+        balance: roundBalance(holding.balance + (claimAmounts[holding.assetId] || 0))
+      })),
+      transactions: [tx, ...activeWallet.transactions]
+    };
+    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
+    logEvent("faucet claimed", "Credited active wallet with testnet tokens.");
+    toast("Faucet claimed successfully!");
+  }
+
   function copyText(value: string, label = "Copied.") {
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(value).then(() => toast(label));
@@ -730,6 +765,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         onCreateWallet={startCreateWallet}
         onCopyAddress={copyText}
         onOpenTransaction={setSelectedTxId}
+        onClaimFaucet={handleClaimFaucet}
       />
     );
   }

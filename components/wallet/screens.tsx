@@ -263,10 +263,35 @@ export function WalletSuccessScreen() {
   );
 }
 
-export function AreaChart() {
+export function AreaChart({ timeframe }: { timeframe: "1D" | "1W" | "1M" | "1Y" | "ALL" }) {
+  const paths: Record<string, { area: string; line: string }> = {
+    "1D": {
+      area: "M 0,40 L 40,48 L 80,35 L 120,42 L 160,25 L 200,30 L 240,15 L 280,18 L 300,8 L 300,80 L 0,80 Z",
+      line: "M 0,40 L 40,48 L 80,35 L 120,42 L 160,25 L 200,30 L 240,15 L 280,18 L 300,8"
+    },
+    "1W": {
+      area: "M 0,35 L 40,50 L 80,55 L 120,40 L 160,28 L 200,18 L 240,30 L 280,15 L 300,4 L 300,80 L 0,80 Z",
+      line: "M 0,35 L 40,50 L 80,55 L 120,40 L 160,28 L 200,18 L 240,30 L 280,15 L 300,4"
+    },
+    "1M": {
+      area: "M 0,65 L 30,55 L 70,62 L 110,38 L 150,45 L 190,18 L 230,28 L 270,12 L 300,4 L 300,80 L 0,80 Z",
+      line: "M 0,65 L 30,55 L 70,62 L 110,38 L 150,45 L 190,18 L 230,28 L 270,12 L 300,4"
+    },
+    "1Y": {
+      area: "M 0,72 L 40,65 L 80,58 L 120,62 L 160,40 L 200,45 L 240,22 L 280,12 L 300,2 L 300,80 L 0,80 Z",
+      line: "M 0,72 L 40,65 L 80,58 L 120,62 L 160,40 L 200,45 L 240,22 L 280,12 L 300,2"
+    },
+    "ALL": {
+      area: "M 0,75 L 40,70 L 80,60 L 120,48 L 160,52 L 200,35 L 240,28 L 280,15 L 300,5 L 300,80 L 0,80 Z",
+      line: "M 0,75 L 40,70 L 80,60 L 120,48 L 160,52 L 200,35 L 240,28 L 280,15 L 300,5"
+    }
+  };
+
+  const currentPath = paths[timeframe] || paths["1M"];
+
   return (
-    <div className="relative w-full h-16 mt-4 overflow-hidden rounded-ui bg-black/10 border border-white/5 p-1">
-      <svg viewBox="0 0 300 80" className="w-full h-full overflow-visible opacity-50" preserveAspectRatio="none">
+    <div className="relative w-full h-24 mt-4 overflow-hidden rounded-ui bg-black/20 border border-white/5 p-1">
+      <svg viewBox="0 0 300 80" className="w-full h-full overflow-visible opacity-70 hover:opacity-90 transition-opacity duration-300" preserveAspectRatio="none">
         <defs>
           <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--cyan)" stopOpacity="0.25" />
@@ -274,16 +299,18 @@ export function AreaChart() {
           </linearGradient>
         </defs>
         <path
-          d="M 0,65 L 30,55 L 70,62 L 110,38 L 150,45 L 190,18 L 230,28 L 270,12 L 300,4 L 300,80 L 0,80 Z"
+          d={currentPath.area}
           fill="url(#area-grad)"
+          className="transition-all duration-500 ease-in-out"
         />
         <path
-          d="M 0,65 L 30,55 L 70,62 L 110,38 L 150,45 L 190,18 L 230,28 L 270,12 L 300,4"
+          d={currentPath.line}
           fill="none"
           stroke="var(--cyan)"
-          strokeWidth="2.5"
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="transition-all duration-500 ease-in-out"
         />
       </svg>
     </div>
@@ -386,7 +413,7 @@ export function HolographicWalletCard({ wallet, onCopyAddress }: { wallet: Walle
               <div className="flex justify-between items-end mt-2">
                 <div>
                   <span className="text-[9px] text-slate-500 uppercase font-mono">Net Portfolio</span>
-                  <span className="text-2xl font-bold text-white font-display block leading-none mt-1">
+                  <span className="text-xl font-bold text-white font-outfit block leading-none mt-1.5">
                     {money(portfolioValue(wallet))}
                   </span>
                 </div>
@@ -429,31 +456,31 @@ export function HolographicWalletCard({ wallet, onCopyAddress }: { wallet: Walle
 function QuickActionPortal({ href, icon: Icon, label, theme }: { href: string; icon: any; label: string; theme: "purple" | "cyan" | "amber" }) {
   const colors = {
     purple: {
-      border: "hover:border-purple/40 hover:bg-purple/5",
-      badgeBg: "bg-purple/10 text-purple border-purple/30",
-      shadow: "group-hover:shadow-[0_0_12px_rgba(168,85,247,0.3)]"
+      border: "hover:border-purple/35 hover:bg-purple/[0.04]",
+      badgeBg: "bg-purple/10 text-purple border-purple/20",
+      shadow: "group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]"
     },
     cyan: {
-      border: "hover:border-cyan/40 hover:bg-cyan/5",
-      badgeBg: "bg-cyan/10 text-cyan border-cyan/30",
-      shadow: "group-hover:shadow-[0_0_12px_rgba(6,182,212,0.3)]"
+      border: "hover:border-cyan/35 hover:bg-cyan/[0.04]",
+      badgeBg: "bg-cyan/10 text-cyan border-cyan/20",
+      shadow: "group-hover:shadow-[0_0_15px_rgba(6,182,212,0.4)]"
     },
     amber: {
-      border: "hover:border-amber/40 hover:bg-amber/5",
-      badgeBg: "bg-amber/10 text-amber border-amber/30",
-      shadow: "group-hover:shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+      border: "hover:border-amber/35 hover:bg-amber/[0.04]",
+      badgeBg: "bg-amber/10 text-amber border-amber/20",
+      shadow: "group-hover:shadow-[0_0_15px_rgba(245,158,11,0.4)]"
     }
   }[theme];
 
   return (
     <Link 
-      className={`group flex flex-col items-center justify-center gap-2 rounded-ui border border-white/5 bg-white/[0.02] p-4 text-center transition ${colors.border} hover:scale-[1.02] active:scale-[0.98] duration-200`} 
+      className={`group flex flex-col items-center justify-center gap-3 rounded-ui border border-white/5 bg-white/[0.015] p-5 text-center transition-all ${colors.border} hover:scale-[1.03] active:scale-[0.97] duration-300`} 
       href={href}
     >
-      <span className={`grid h-10 w-10 place-items-center rounded-full ${colors.badgeBg} border ${colors.shadow} transition-all duration-300`}>
+      <span className={`grid h-11 w-11 place-items-center rounded-xl ${colors.badgeBg} border ${colors.shadow} transition-all duration-300`}>
         <Icon className="h-5 w-5" />
       </span>
-      <span className="text-xs font-bold text-white font-mono">{label}</span>
+      <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors font-outfit">{label}</span>
     </Link>
   );
 }
@@ -462,13 +489,17 @@ export function DashboardScreen({
   activeWallet,
   onCreateWallet,
   onCopyAddress,
-  onOpenTransaction
+  onOpenTransaction,
+  onClaimFaucet
 }: {
   activeWallet: Wallet | null;
   onCreateWallet: () => void;
   onCopyAddress: (address: string) => void;
   onOpenTransaction: (transactionId: string) => void;
+  onClaimFaucet: () => void;
 }) {
+  const [timeframe, setTimeframe] = useState<"1D" | "1W" | "1M" | "1Y" | "ALL">("1M");
+
   if (!activeWallet) return <WalletSetupScreen onCreateWallet={onCreateWallet} />;
   const total = portfolioValue(activeWallet);
   const txs = activeWallet.transactions.slice(0, 4);
@@ -477,19 +508,49 @@ export function DashboardScreen({
     <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-[1440px] mx-auto w-full">
       {/* Bento Item 1: Portfolio Balance & Holographic Card (Spans 2 columns) */}
       <div className="md:col-span-2">
-        <article className="glass-panel rounded-ui p-6 shadow-glow relative overflow-hidden flex flex-col sm:flex-row justify-between items-center gap-6 h-full">
+        <article className="glass-panel rounded-ui p-6 shadow-glow relative overflow-hidden flex flex-col justify-between gap-6 h-full">
           <div className="absolute inset-0 bg-gradient-to-r from-purple/5 via-pink/5 to-transparent pointer-events-none -z-10" />
-          <div className="w-full text-left self-start">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Decrypted Net Worth</span>
-            <strong className="mt-1 block text-4xl sm:text-5xl font-extrabold tracking-tight text-white font-display">
-              {money(total)}
-            </strong>
-            <p className="mt-2 text-xs text-slate-400 font-mono">
-              Aggregated holdings across {activeWallet.assets.length} active sandbox chains.
-            </p>
-            <AreaChart />
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-6 w-full">
+            <div className="text-left">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Decrypted Net Worth</span>
+              <div className="flex flex-wrap items-baseline gap-3 mt-1.5">
+                <strong className="text-4xl sm:text-5xl font-bold tracking-tight text-white font-outfit">
+                  {money(total)}
+                </strong>
+                <span className="inline-flex items-center gap-1 rounded-full bg-mint/15 border border-mint/25 px-2.5 py-0.5 text-xs font-mono font-bold text-mint">
+                  +4.89%
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-slate-400 font-mono">
+                Aggregated holdings across {activeWallet.assets.length} active sandbox chains.
+              </p>
+            </div>
+            <div className="w-full sm:w-auto flex justify-center">
+              <HolographicWalletCard wallet={activeWallet} onCopyAddress={onCopyAddress} />
+            </div>
           </div>
-          <HolographicWalletCard wallet={activeWallet} onCopyAddress={onCopyAddress} />
+
+          <div className="w-full text-left">
+            <div className="flex items-center justify-between mt-2 border-t border-white/5 pt-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Performance history</span>
+              <div className="flex gap-1 bg-white/[0.03] border border-white/5 p-0.5 rounded-ui">
+                {(["1D", "1W", "1M", "1Y", "ALL"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTimeframe(t)}
+                    className={`px-2.5 py-1 text-[10px] font-bold font-mono rounded-[8px] transition-all duration-200 ${
+                      timeframe === t
+                        ? "bg-purple text-white shadow-glow"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <AreaChart timeframe={timeframe} />
+          </div>
         </article>
       </div>
 
@@ -503,13 +564,13 @@ export function DashboardScreen({
           <QuickActionPortal href="/send" icon={Send} label="Send" theme="purple" />
           <QuickActionPortal href="/receive" icon={Download} label="Receive" theme="cyan" />
           <button 
-            className="group flex flex-col items-center justify-center gap-2 rounded-ui border border-white/5 bg-white/[0.02] p-4 text-center transition hover:border-pink/40 hover:bg-pink/5 hover:scale-[1.02] active:scale-[0.98] duration-200" 
-            onClick={onCreateWallet}
+            className="group flex flex-col items-center justify-center gap-3 rounded-ui border border-white/5 bg-white/[0.015] p-5 text-center transition-all hover:border-pink/30 hover:bg-pink/[0.04] hover:scale-[1.03] active:scale-[0.97] duration-300" 
+            onClick={onClaimFaucet}
           >
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-pink/10 text-pink border border-pink/30 group-hover:shadow-[0_0_12px_rgba(236,72,153,0.3)] transition-all duration-300">
-              <Plus className="h-5 w-5" />
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-pink/10 text-pink border border-pink/20 group-hover:shadow-[0_0_15px_rgba(236,72,153,0.4)] transition-all duration-300">
+              <CircleDollarSign className="h-5 w-5" />
             </span>
-            <span className="text-xs font-bold text-white font-mono">Add Wallet</span>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors font-outfit">Claim Faucet</span>
           </button>
           <QuickActionPortal href="/history" icon={History} label="History" theme="amber" />
         </div>
@@ -658,6 +719,12 @@ export function AssetDetailScreen({
   );
 }
 
+const RECENT_RECIPIENTS = [
+  { name: "Alice (EVM Address)", address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" },
+  { name: "Bob (Bitcoin Address)", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
+  { name: "Charlie (Solana Address)", address: "HN7cABvi3M46GNEh2fRJVywryzrc3gKm7DkUpxF4BHr4" }
+];
+
 export function SendScreen({
   activeWallet,
   assetId,
@@ -671,48 +738,125 @@ export function SendScreen({
   onAssetChange: (assetId: string) => void;
   onSend: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const [recipient, setRecipient] = useState("");
+  const [amount, setAmount] = useState("");
+
   if (!activeWallet) return null;
   const activeAsset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const holding = activeWallet.assets.find((item) => item.assetId === activeAsset.id);
+
   return (
-    <form className="grid gap-6 text-left max-w-2xl mx-auto w-full py-4" onSubmit={onSend}>
-      <Panel animate className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple/5 to-transparent pointer-events-none -z-10" />
-        <h2 className="text-xl font-bold font-display text-white mb-4">Send Asset</h2>
-        <div className="grid gap-4">
-          <AssetSelect
-            wallet={activeWallet}
-            name="assetId"
-            selected={activeAsset.id}
-            onAssetChange={onAssetChange}
-          />
-          <Field label="Recipient address" name="recipient" placeholder="0x..." required />
-          <Field label="Amount" name="amount" type="number" placeholder="0.00" required />
-          
-          <div className="grid gap-2 rounded-ui border border-white/5 bg-black/40 p-4 text-xs font-mono">
-            <div className="flex justify-between gap-3">
-              <span className="text-slate-400">Available Balance</span>
-              <strong className="text-white">{holding ? `${formatAmount(holding.balance)} ${activeAsset.symbol}` : "0"}</strong>
+    <div className="grid gap-6 lg:grid-cols-3 max-w-5xl mx-auto w-full py-4 text-left">
+      <form className="lg:col-span-2 grid gap-6" onSubmit={onSend}>
+        <Panel animate className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple/5 to-transparent pointer-events-none -z-10" />
+          <h2 className="text-xl font-bold font-display text-white mb-4">Send Asset</h2>
+          <div className="grid gap-4">
+            <AssetSelect
+              wallet={activeWallet}
+              name="assetId"
+              selected={activeAsset.id}
+              onAssetChange={onAssetChange}
+            />
+
+            {/* Recipient Address */}
+            <div className="relative grid gap-1.5 w-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Recipient Address</span>
+              <input
+                className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-mono"
+                name="recipient"
+                placeholder="0x... or bc1q..."
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                required
+              />
             </div>
-            <div className="h-px bg-white/5 my-1" />
-            <div className="flex justify-between gap-3">
-              <span className="text-slate-400">Estimated Gas Fee</span>
-              <strong className="text-white">{estimateFee(activeAsset.id)}</strong>
+
+            {/* Amount */}
+            <div className="relative grid gap-1.5 w-full">
+              <div className="flex justify-between items-baseline pl-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Amount</span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Available: {holding ? formatAmount(holding.balance) : "0"} {activeAsset.symbol}
+                </span>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 pl-4 pr-16 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit"
+                  name="amount"
+                  type="number"
+                  step="any"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                />
+                <span className="absolute right-4 text-xs font-bold text-slate-400 font-mono uppercase">
+                  {activeAsset.symbol}
+                </span>
+              </div>
+              {/* Quick Percentage Buttons */}
+              <div className="flex gap-1.5 mt-1">
+                {([25, 50, 75, 100] as const).map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => {
+                      if (!holding) return;
+                      const computed = holding.balance * (pct / 100);
+                      setAmount(String(Math.round(computed * 1000000) / 1000000));
+                    }}
+                    className="flex-1 py-1 text-[10px] font-bold font-mono rounded bg-white/[0.03] border border-white/5 text-slate-400 hover:text-white hover:border-cyan/30 hover:bg-cyan/5 transition-all"
+                  >
+                    {pct === 100 ? "MAX" : `${pct}%`}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <div className="grid gap-2 rounded-ui border border-white/5 bg-black/40 p-4 text-xs font-mono">
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-400">Available Balance</span>
+                <strong className="text-white">{holding ? `${formatAmount(holding.balance)} ${activeAsset.symbol}` : "0"}</strong>
+              </div>
+              <div className="h-px bg-white/5 my-1" />
+              <div className="flex justify-between gap-3">
+                <span className="text-slate-400">Estimated Gas Fee</span>
+                <strong className="text-white">{estimateFee(activeAsset.id)}</strong>
+              </div>
+            </div>
+            <FormError message={formError} />
           </div>
-          <FormError message={formError} />
+        </Panel>
+        <div className="flex flex-wrap gap-2" data-animate>
+          <button className={buttonPrimary} type="submit">
+            <ScanLine className="h-4 w-4" />
+            Review Transaction
+          </button>
+          <Link className={buttonSecondary} href="/dashboard">
+            Cancel
+          </Link>
         </div>
-      </Panel>
-      <div className="flex flex-wrap gap-2" data-animate>
-        <button className={buttonPrimary} type="submit">
-          <ScanLine className="h-4 w-4" />
-          Review Transaction
-        </button>
-        <Link className={buttonSecondary} href="/dashboard">
-          Cancel
-        </Link>
+      </form>
+
+      {/* Recent Recipients Sidebar */}
+      <div className="glass-panel rounded-ui p-5 flex flex-col h-fit" data-animate>
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono mb-4">Recent Contacts</h3>
+        <div className="grid gap-3">
+          {RECENT_RECIPIENTS.map((contact) => (
+            <button
+              key={contact.address}
+              type="button"
+              onClick={() => setRecipient(contact.address)}
+              className="group flex flex-col items-start gap-1 rounded-ui border border-white/5 bg-white/[0.015] p-3 hover:border-cyan/30 hover:bg-cyan/5 transition-all w-full text-left"
+            >
+              <span className="text-xs font-bold text-white group-hover:text-cyan transition-colors">{contact.name}</span>
+              <span className="text-[10px] text-slate-500 font-mono truncate w-full">{contact.address}</span>
+            </button>
+          ))}
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -834,10 +978,10 @@ export function ReceiveScreen({
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
   return (
     <section className="grid gap-6 text-left max-w-4xl mx-auto w-full py-4 lg:grid-cols-2">
-      <Panel animate className="relative overflow-hidden flex flex-col justify-between">
+      <Panel animate className="relative overflow-hidden flex flex-col justify-between p-6">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan/5 to-transparent pointer-events-none -z-10" />
         <div>
-          <h2 className="text-xl font-bold font-display text-white mb-4">Receive Cryptography</h2>
+          <h2 className="text-xl font-bold font-display text-white mb-4">Receive Assets</h2>
           <div className="grid gap-4">
             <AssetSelect
               wallet={activeWallet}
@@ -846,8 +990,8 @@ export function ReceiveScreen({
               onAssetChange={onAssetChange}
             />
             <div className="relative grid gap-1.5 text-left">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Address</span>
-              <div className="flex min-w-0 items-center gap-2 rounded-ui border border-white/10 bg-black/40 px-3 py-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Your Deposit Address</span>
+              <div className="flex min-w-0 items-center gap-2 rounded-ui border border-white/10 bg-black/40 px-3.5 py-2.5">
                 <code className="min-w-0 flex-1 truncate text-xs text-slate-300 font-mono">{account.address}</code>
                 <button className={`${buttonSecondary} !min-h-0 h-9 px-3`} onClick={() => onCopyText(account.address)} type="button">
                   <Copy className="h-3.5 w-3.5" />
@@ -857,22 +1001,25 @@ export function ReceiveScreen({
             </div>
           </div>
         </div>
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="mt-8 flex flex-col gap-2">
           <button className={buttonSecondary} onClick={() => onShareText(account.address)} type="button">
             <Share2 className="h-4 w-4" />
-            Share Coordinates
+            Share Address
           </button>
         </div>
       </Panel>
       
-      <Panel animate className="flex flex-col items-center justify-center p-8">
-        <div className="mb-4 flex items-center justify-between gap-3 w-full">
+      <Panel animate className="flex flex-col items-center justify-center p-8 min-h-[300px]">
+        <div className="mb-6 flex items-center justify-between gap-3 w-full border-b border-white/5 pb-4">
           <h2 className="text-lg font-bold font-display text-white">QR Code</h2>
           <Badge>{asset.chain}</Badge>
         </div>
         <div className="bg-white p-3.5 rounded-[16px] shadow-glow flex items-center justify-center">
           <QrCode value={account.address} />
         </div>
+        <p className="mt-4 text-[11px] text-slate-500 font-mono text-center max-w-[200px]">
+          Scan this QR to send {asset.symbol} tokens to this wallet.
+        </p>
       </Panel>
     </section>
   );

@@ -474,11 +474,26 @@ export function BackupModal({ onClose }: { onClose: () => void }) {
 }
 
 export function QrCode({ value }: { value: string }) {
+  const cells = qrCells(value);
+  const size = 21;
+  const paths: string[] = [];
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (cells[y * size + x]) {
+        paths.push(`M${x},${y}h1v1h-1z`);
+      }
+    }
+  }
+
   return (
-    <div className="grid w-[min(100%,260px)] grid-cols-[repeat(21,1fr)] gap-px rounded-ui border-[12px] border-[#f8fbff] bg-[#f8fbff]">
-      {qrCells(value).map((on, index) => (
-        <span className={`aspect-square ${on ? "qr-cell-on" : "qr-cell-off"}`} key={index} />
-      ))}
+    <div className="w-full max-w-[200px] aspect-square rounded-ui border-[12px] border-[#f8fbff] bg-[#f8fbff] flex items-center justify-center">
+      <svg
+        viewBox="0 0 21 21"
+        className="w-full h-full text-[#03050c]"
+        shapeRendering="crispEdges"
+      >
+        <path d={paths.join(" ")} fill="currentColor" />
+      </svg>
     </div>
   );
 }

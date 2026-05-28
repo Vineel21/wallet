@@ -136,6 +136,19 @@ export function deriveAccounts(phrase: string[]): WalletAccount[] {
   ];
 }
 
+export function getDeterministicBalance(assetId: string, phrase: string[]) {
+  const seedString = phrase.join(" ") + assetId;
+  let hash = 0;
+  for (let i = 0; i < seedString.length; i++) {
+    hash = (hash << 5) - hash + seedString.charCodeAt(i);
+    hash |= 0;
+  }
+  const factor = 0.35 + (Math.abs(hash) % 130) / 100; // factor between 0.35 and 1.65
+  const baseAsset = ASSETS.find((a) => a.id === assetId);
+  const baseBalance = baseAsset ? baseAsset.balance : 1;
+  return roundBalance(baseBalance * factor);
+}
+
 export function createWalletForUser(
   userId: string,
   name: string,
@@ -152,7 +165,7 @@ export function createWalletForUser(
     accounts: deriveAccounts(phrase),
     assets: ASSETS.map((asset, index) => ({
       assetId: asset.id,
-      balance: roundBalance(asset.balance * (source === "imported" ? 0.72 : 1)),
+      balance: getDeterministicBalance(asset.id, phrase),
       favorite: index < 2
     })),
     transactions: seedTransactions(phrase)
@@ -195,13 +208,21 @@ export function demoWallet(userId: string): Wallet {
 export function seedTransactions(phrase: string[]): WalletTransaction[] {
   const accounts = deriveAccounts(phrase);
   const evm = accounts[0].address;
+  const seed = hashString(phrase.join(" "));
+  
+  // Deterministic values based on seed hash
+  const ethAmt = roundBalance(0.2 + (seed % 150) / 100);
+  const usdcAmt = 50 + (seed % 950);
+  const btcAmt = roundBalance(0.005 + (seed % 45) / 1000);
+  const maticAmt = 10 + (seed % 190);
+
   return [
     {
       id: uid("tx"),
       assetId: "eth",
       type: "incoming",
       status: "success",
-      amount: 0.84,
+      amount: ethAmt,
       fee: "0.0012 ETH",
       from: fakeEvmAddress(),
       to: evm,
@@ -213,7 +234,7 @@ export function seedTransactions(phrase: string[]): WalletTransaction[] {
       assetId: "usdc",
       type: "outgoing",
       status: "pending",
-      amount: 120,
+      amount: usdcAmt,
       fee: "0.0008 ETH",
       from: evm,
       to: fakeEvmAddress(),
@@ -225,7 +246,7 @@ export function seedTransactions(phrase: string[]): WalletTransaction[] {
       assetId: "btc",
       type: "incoming",
       status: "success",
-      amount: 0.021,
+      amount: btcAmt,
       fee: "0.00004 BTC",
       from: `bc1q${randomString(36)}`,
       to: accounts[1].address,
@@ -237,7 +258,7 @@ export function seedTransactions(phrase: string[]): WalletTransaction[] {
       assetId: "matic",
       type: "outgoing",
       status: "failed",
-      amount: 42,
+      amount: maticAmt,
       fee: "0.03 MATIC",
       from: evm,
       to: fakeEvmAddress(),

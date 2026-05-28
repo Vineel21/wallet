@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, History, Star, WalletCards } from "lucide-react";
+import { Copy, History, Star, WalletCards, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { assetById, formatAmount, formatDate, money, shortAddress } from "@/lib/mock-data";
 import type { Wallet, WalletHolding, WalletTransaction } from "@/lib/types";
@@ -44,49 +44,92 @@ function hashString(value: string) {
   return Math.abs(hash);
 }
 
+const MOCK_CHANGES: Record<string, { percent: string; positive: boolean }> = {
+  eth: { percent: "+3.42%", positive: true },
+  btc: { percent: "+1.85%", positive: true },
+  matic: { percent: "-2.10%", positive: false },
+  usdc: { percent: "0.00%", positive: true },
+  sol: { percent: "+7.89%", positive: true },
+  bnb: { percent: "-0.45%", positive: false }
+};
+
 export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
   if (!holdings.length) {
     return <EmptyState title="No assets" text="Demo holdings will appear after wallet setup." icon={WalletCards} />;
   }
 
   return (
-    <div className="grid gap-2">
-      {holdings.map((holding) => {
-        const asset = assetById(holding.assetId);
-        return (
-          <Link
-            className="group thin-panel flex min-h-[76px] min-w-0 items-center justify-between gap-3 rounded-ui p-3.5 transition duration-300 hover:border-cyan/30 hover:bg-cyan/5 hover:-translate-y-0.5"
-            data-float-in
-            href={`/asset/${asset.id}`}
-            key={asset.id}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <AssetIcon assetId={asset.id} />
-              <div className="min-w-0">
-                <strong className="block truncate font-bold text-white group-hover:text-cyan transition-colors">
-                  {asset.name}
-                  {holding.favorite && <Star className="ml-1.5 inline h-3.5 w-3.5 fill-amber text-amber" />}
-                </strong>
-                <span className="block truncate text-xs text-slate-400 mt-0.5">
-                  {asset.symbol} on {asset.chain}
-                </span>
-              </div>
-            </div>
-            
-            {/* Sparkline chart in the center */}
-            <div className="hidden sm:block shrink-0 mx-auto">
-              <Sparkline seed={asset.id} color={asset.color} />
-            </div>
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <div className="inline-block min-w-full align-middle">
+        <div className="overflow-hidden border border-white/5 bg-white/[0.01] rounded-ui backdrop-blur-md">
+          {/* Table Headers */}
+          <div className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1.5fr] items-center px-5 py-3.5 border-b border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+            <span>Asset</span>
+            <span className="text-left hidden sm:block">24h Change</span>
+            <span className="text-center hidden sm:block">Market trend</span>
+            <span className="text-right">Balance / Value</span>
+          </div>
 
-            <div className="shrink-0 text-right">
-              <strong className="block font-bold text-white">
-                {formatAmount(holding.balance)} {asset.symbol}
-              </strong>
-              <span className="text-xs text-slate-400 mt-0.5">{money(holding.balance * asset.price)}</span>
-            </div>
-          </Link>
-        );
-      })}
+          <div className="divide-y divide-white/5">
+            {holdings.map((holding) => {
+              const asset = assetById(holding.assetId);
+              const change = MOCK_CHANGES[holding.assetId] || { percent: "0.00%", positive: true };
+              return (
+                <Link
+                  className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1.5fr] items-center px-5 py-4 transition duration-300 hover:bg-white/[0.03] group text-left"
+                  data-float-in
+                  href={`/asset/${asset.id}`}
+                  key={asset.id}
+                >
+                  {/* Column 1: Icon & Name */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <AssetIcon assetId={asset.id} />
+                    <div className="min-w-0">
+                      <strong className="block truncate font-bold text-white group-hover:text-cyan transition-colors text-sm sm:text-base">
+                        {asset.name}
+                        {holding.favorite && <Star className="ml-1.5 inline h-3.5 w-3.5 fill-amber text-amber" />}
+                      </strong>
+                      <span className="block truncate text-xs text-slate-400 mt-0.5">
+                        {asset.symbol} on {asset.chain}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column 2: 24h Change */}
+                  <div className="text-left hidden sm:block">
+                    <span className={`inline-flex items-center text-[10px] sm:text-xs font-bold font-mono px-2 py-0.5 rounded border ${
+                      change.positive ? "text-mint border-mint/25 bg-mint/5" : "text-rose border-rose/25 bg-rose/5"
+                    }`}>
+                      {change.percent}
+                    </span>
+                  </div>
+
+                  {/* Column 3: Sparkline */}
+                  <div className="hidden sm:flex justify-center shrink-0">
+                    <Sparkline seed={asset.id} color={asset.color} />
+                  </div>
+
+                  {/* Column 4: Balance */}
+                  <div className="text-right shrink-0">
+                    <strong className="block font-semibold text-white font-outfit text-sm sm:text-base">
+                      {formatAmount(holding.balance)} {asset.symbol}
+                    </strong>
+                    <span className="block text-xs text-slate-400 mt-0.5 font-outfit">
+                      {money(holding.balance * asset.price)}
+                    </span>
+                    {/* Fallback 24h change for mobile */}
+                    <span className={`inline-flex sm:hidden mt-1 text-[9px] font-bold font-mono px-1 rounded border ${
+                      change.positive ? "text-mint border-mint/20 bg-mint/5" : "text-rose border-rose/20 bg-rose/5"
+                    }`}>
+                      {change.percent}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -103,43 +146,67 @@ export function TxList({
   }
 
   return (
-    <div className="grid gap-2">
-      {transactions.map((tx) => {
-        const asset = assetById(tx.assetId);
-        return (
-          <button
-            className="group thin-panel flex min-h-[76px] w-full min-w-0 items-center justify-between gap-3 rounded-ui p-3.5 text-left transition duration-300 hover:border-purple/30 hover:bg-purple/5 hover:-translate-y-0.5"
-            data-float-in
-            key={tx.id}
-            onClick={() => onOpenTransaction(tx.id)}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <AssetIcon assetId={asset.id} />
-              <div className="min-w-0">
-                <strong className="block truncate font-bold text-white group-hover:text-purple transition-colors">
-                  {capitalize(tx.type)} {asset.symbol}
+    <div className="overflow-hidden border border-white/5 bg-white/[0.01] rounded-ui backdrop-blur-md">
+      {/* Table Headers */}
+      <div className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1.5fr] items-center px-5 py-3.5 border-b border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+        <span>Activity</span>
+        <span className="text-center hidden sm:block">Market flow</span>
+        <span className="text-right">Amount / Status</span>
+      </div>
+
+      <div className="divide-y divide-white/5">
+        {transactions.map((tx) => {
+          const asset = assetById(tx.assetId);
+          return (
+            <button
+              className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1.5fr] items-center px-5 py-4 w-full text-left transition duration-300 hover:bg-white/[0.03] group"
+              data-float-in
+              key={tx.id}
+              onClick={() => onOpenTransaction(tx.id)}
+            >
+              {/* Column 1: Direction icon overlay and Name */}
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="relative shrink-0">
+                  <AssetIcon assetId={asset.id} />
+                  <span className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#090d16] text-white shadow-sm ${
+                    tx.type === "incoming" ? "bg-mint" : "bg-rose"
+                  }`}>
+                    {tx.type === "incoming" ? (
+                      <ArrowDownLeft className="h-2.5 w-2.5" />
+                    ) : (
+                      <ArrowUpRight className="h-2.5 w-2.5" />
+                    )}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <strong className="block truncate font-bold text-white group-hover:text-purple transition-colors text-sm sm:text-base">
+                    {capitalize(tx.type)} {asset.symbol}
+                  </strong>
+                  <span className="block truncate text-xs text-slate-400 mt-0.5">{formatDate(tx.createdAt)}</span>
+                </div>
+              </div>
+
+              {/* Column 2: Sparkline */}
+              <div className="hidden sm:flex justify-center shrink-0">
+                <Sparkline seed={tx.id} color={tx.type === "incoming" ? "var(--mint)" : "var(--rose)"} />
+              </div>
+
+              {/* Column 3: Amount & Badge */}
+              <div className="text-right shrink-0">
+                <strong className={`block font-semibold font-outfit text-sm sm:text-base ${
+                  tx.type === "incoming" ? "text-mint" : "text-slate-200"
+                }`}>
+                  {tx.type === "incoming" ? "+" : "-"}
+                  {formatAmount(tx.amount)} {asset.symbol}
                 </strong>
-                <span className="block truncate text-xs text-slate-400 mt-0.5">{formatDate(tx.createdAt)}</span>
+                <div className="mt-1 flex justify-end">
+                  <Badge status={tx.status}>{tx.status}</Badge>
+                </div>
               </div>
-            </div>
-
-            {/* Sparkline in the center */}
-            <div className="hidden sm:block shrink-0 mx-auto">
-              <Sparkline seed={tx.id} color={tx.type === "incoming" ? "var(--mint)" : "var(--rose)"} />
-            </div>
-
-            <div className="shrink-0 text-right">
-              <strong className="block font-bold text-white">
-                {tx.type === "incoming" ? "+" : "-"}
-                {formatAmount(tx.amount)} {asset.symbol}
-              </strong>
-              <div className="mt-1 flex justify-end">
-                <Badge status={tx.status}>{tx.status}</Badge>
-              </div>
-            </div>
-          </button>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
