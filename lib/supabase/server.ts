@@ -29,6 +29,21 @@ export function getSupabaseAuthClient() {
   return authClient;
 }
 
+export function getSupabaseUserClient(token: string) {
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+
 export function getSupabaseConfigState() {
   return {
     url: Boolean(supabaseUrl),
@@ -44,9 +59,9 @@ export async function getBearerUser(request: Request): Promise<{ user: User; tok
     return { error: Response.json({ error: "Missing bearer token." }, { status: 401 }) };
   }
 
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabaseAuthClient();
   if (!supabase) {
-    return { error: Response.json({ error: "Supabase is not configured." }, { status: 503 }) };
+    return { error: Response.json({ error: "Supabase auth is not configured." }, { status: 503 }) };
   }
 
   const { data, error } = await supabase.auth.getUser(token);
