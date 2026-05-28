@@ -378,9 +378,14 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         method: "POST",
         body: JSON.stringify({ name: data.name, email, password: data.password })
       });
-      await authenticate(email, data.password);
-      toast("Account created.");
-      router.push("/wallet-setup");
+      try {
+        await authenticate(email, data.password);
+        toast("Account created.");
+        router.push("/wallet-setup");
+      } catch {
+        toast("Account created. Check your email to confirm before logging in.");
+        router.push("/login");
+      }
     } catch (error) {
       setFormError(error instanceof Error ? error.message : firstZodError(error));
     }

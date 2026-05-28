@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseAuthClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -10,9 +10,9 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabaseAuthClient();
   if (!supabase) {
-    return Response.json({ error: "Supabase is not configured." }, { status: 503 });
+    return Response.json({ error: "Supabase auth is not configured." }, { status: 503 });
   }
 
   const parsed = registerSchema.safeParse(await request.json().catch(() => null));
@@ -21,24 +21,17 @@ export async function POST(request: Request) {
   }
 
   const { name, email, password } = parsed.data;
-  const { data, error } = await supabase.auth.admin.createUser({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: true,
-    user_metadata: { name }
+    options: {
+      data: { name }
+    }
   });
 
   if (error || !data.user) {
     return Response.json({ error: error?.message ?? "Unable to create user." }, { status: 400 });
   }
-
-  await supabase.from("profiles").upsert({
-    id: data.user.id,
-    email: data.user.email ?? email,
-    name,
-    email_verified: Boolean(data.user.email_confirmed_at),
-    updated_at: new Date().toISOString()
-  });
 
   return Response.json(
     {
