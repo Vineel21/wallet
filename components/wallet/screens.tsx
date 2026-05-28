@@ -885,10 +885,12 @@ export function SendScreen({
 }
 
 export function ReviewScreen({
+  isSubmitting,
   pendingTransfer,
   transferError,
   onReview
 }: {
+  isSubmitting: boolean;
   pendingTransfer: PendingTransfer | null;
   transferError: string;
   onReview: (event: FormEvent<HTMLFormElement>) => void;
@@ -935,11 +937,11 @@ export function ReviewScreen({
         </div>
       </Panel>
       <div className="flex flex-wrap gap-2" data-animate>
-        <button className={buttonPrimary} type="submit">
-          <CheckCircle2 className="h-4 w-4" />
-          Submit Signature
+        <button className={buttonPrimary} disabled={isSubmitting} type="submit">
+          {isSubmitting ? <Clock3 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+          {isSubmitting ? "Submitting..." : "Submit Signature"}
         </button>
-        <Link className={buttonSecondary} href="/send">
+        <Link className={`${buttonSecondary} ${isSubmitting ? "pointer-events-none opacity-50" : ""}`} href="/send">
           Edit
         </Link>
       </div>

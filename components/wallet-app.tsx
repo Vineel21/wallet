@@ -131,6 +131,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   });
   const [formError, setFormError] = useState("");
   const [transferError, setTransferError] = useState("");
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
   const [toasts, setToasts] = useState<Array<{ id: string; message: string }>>([]);
 
   useEffect(() => {
@@ -226,6 +227,13 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     if (!hydrated || !["create-wallet", "confirm-phrase"].includes(routeName) || draftPhrase.length) return;
     persistDraftPhrase(generateMnemonic());
   }, [draftPhrase.length, hydrated, routeName]);
+
+  useEffect(() => {
+    if (routeName !== "transfer-result" || !pendingTransfer || !lastTransfer) return;
+    setPendingTransfer(null);
+    removeStorage(STORAGE.pendingTransfer);
+    setTransferSubmitting(false);
+  }, [lastTransfer, pendingTransfer, routeName]);
 
   useGSAP(
     () => {
@@ -681,11 +689,13 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   async function handleReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTransferError("");
-    if (!currentUser || !activeWallet || !pendingTransfer) return;
+    if (transferSubmitting || !currentUser || !activeWallet || !pendingTransfer) return;
+    setTransferSubmitting(true);
     const password = String(new FormData(event.currentTarget).get("password") ?? "");
     try {
       await authenticate(currentUser.email, password);
     } catch {
+      setTransferSubmitting(false);
       setTransferError("Password confirmation failed.");
       return;
     }
@@ -783,7 +793,6 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       createdAt: now()
     };
     persistLastTransfer(result);
-    persistPendingTransfer(null);
     logEvent("transfer submitted", `${pendingTransfer.amount} ${asset.symbol} transfer ${status}.`);
     toast(status === "success" ? "Transfer submitted." : "Transfer failed.");
     router.push("/transfer-result");
@@ -1062,7 +1071,14 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       );
     }
     if (routeName === "review") {
-      return <ReviewScreen pendingTransfer={pendingTransfer} transferError={transferError} onReview={handleReview} />;
+      return (
+        <ReviewScreen
+          isSubmitting={transferSubmitting}
+          pendingTransfer={pendingTransfer}
+          transferError={transferError}
+          onReview={handleReview}
+        />
+      );
     }
     if (routeName === "transfer-result") return <TransferResultScreen lastTransfer={lastTransfer} />;
     if (routeName === "receive") {
