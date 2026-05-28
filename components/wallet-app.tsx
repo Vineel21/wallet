@@ -47,6 +47,7 @@ import {
   TransferResult,
   User as UserType,
   Wallet,
+  WalletHolding,
   WalletTransaction
 } from "@/lib/types";
 import {
@@ -87,6 +88,11 @@ type RemoteSecurityEvent = {
   event_type: string;
   detail: string | null;
   created_at: string;
+};
+
+type WalletRuntime = {
+  assets: WalletHolding[];
+  transactions: WalletTransaction[];
 };
 
 export function WalletApp({ initialRoute }: WalletAppProps) {
@@ -208,6 +214,15 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
 
   function persistWallets(next: Wallet[]) {
     setWallets(next);
+    const runtime = readJson<Record<string, WalletRuntime>>(STORAGE.walletRuntime, {});
+    const nextRuntime = { ...runtime };
+    next.forEach((wallet) => {
+      nextRuntime[wallet.id] = {
+        assets: wallet.assets,
+        transactions: wallet.transactions
+      };
+    });
+    writeJson(STORAGE.walletRuntime, nextRuntime);
   }
 
   function persistEvents(next: SecurityEvent[]) {
@@ -278,12 +293,17 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     return readJson<Record<string, string[]>>(STORAGE.walletPhrases, {});
   }
 
+  function runtimeStore() {
+    return readJson<Record<string, WalletRuntime>>(STORAGE.walletRuntime, {});
+  }
+
   function persistWalletPhrase(walletId: string, phrase: string[]) {
     writeJson(STORAGE.walletPhrases, { ...phraseStore(), [walletId]: phrase });
   }
 
   function remoteWalletToWallet(remote: RemoteWallet, userId = currentUser?.id ?? ""): Wallet {
     const phrases = phraseStore();
+    const runtime = runtimeStore()[remote.id];
     return {
       id: remote.id,
       userId,
@@ -296,13 +316,59 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
         chain: account.chain,
         address: account.address
       })),
-      assets: ASSETS.map((asset, index) => ({
+      assets: runtime?.assets ?? ASSETS.map((asset, index) => ({
         assetId: asset.id,
         balance: 0,
         favorite: index < 2
       })),
-      transactions: []
+      transactions: runtime?.transactions ?? []
     };
+  }
+
+  function createStarterRuntime(wallet: Wallet): WalletRuntime {
+    const assets = wallet.assets.map((holding, index) => {
+      const asset = assetById(holding.assetId);
+      const seed = Math.random();
+      const balance =
+        asset.id === "btc"
+          ? 0.005 + seed * 0.045
+          : asset.id === "eth"
+            ? 0.2 + seed * 1.8
+            : asset.id === "usdc"
+              ? 100 + seed * 2400
+              : asset.id === "sol"
+                ? 2 + seed * 35
+                : asset.id === "bnb"
+                  ? 0.5 + seed * 8
+                  : 50 + seed * 950;
+
+      return {
+        ...holding,
+        balance: roundBalance(balance),
+        favorite: index < 2
+      };
+    });
+
+    const transactions = assets
+      .filter((holding) => holding.balance > 0)
+      .map((holding) => {
+        const asset = assetById(holding.assetId);
+        const account = wallet.accounts.find((item) => item.chain === asset.chain) ?? wallet.accounts[0];
+        return {
+          id: uid("tx"),
+          assetId: holding.assetId,
+          type: "incoming" as const,
+          status: "success" as const,
+          amount: holding.balance,
+          fee: `0 ${asset.symbol}`,
+          from: "MVP starter allocation",
+          to: account?.address ?? "",
+          hash: fakeHash(),
+          createdAt: now()
+        };
+      });
+
+    return { assets, transactions };
   }
 
   async function loadRemoteData(token: string, userId = currentUser?.id, preferredWalletId = activeWalletId) {
@@ -486,6 +552,9 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       persistWalletPhrase(payload.wallet.id, draftPhrase);
       const wallet = remoteWalletToWallet(payload.wallet, currentUser.id);
       wallet.phrase = draftPhrase;
+      const runtime = createStarterRuntime(wallet);
+      wallet.assets = runtime.assets;
+      wallet.transactions = runtime.transactions;
       persistWallets([wallet, ...wallets]);
       updateActiveWallet(wallet.id);
       removeStorage(STORAGE.draftPhrase);
@@ -524,6 +593,9 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       persistWalletPhrase(payload.wallet.id, words);
       const wallet = remoteWalletToWallet(payload.wallet, currentUser.id);
       wallet.phrase = words;
+      const runtime = createStarterRuntime(wallet);
+      wallet.assets = runtime.assets;
+      wallet.transactions = runtime.transactions;
       persistWallets([wallet, ...wallets]);
       updateActiveWallet(wallet.id);
       toast("Wallet imported.");
@@ -573,7 +645,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
     }
     const asset = assetById(pendingTransfer.assetId);
     const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
-    const status = Math.random() > 0.08 ? "success" : "failed";
+    const status = "success";
     const hash = fakeHash();
     const tx: WalletTransaction = {
       id: uid("tx"),
@@ -710,6 +782,33 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       )
     };
     persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
+  }
+
+  function handleReceive(assetId: string, amount: number) {
+    if (!activeWallet || amount <= 0) return;
+    const asset = assetById(assetId);
+    const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
+    const tx: WalletTransaction = {
+      id: uid("tx"),
+      assetId,
+      type: "incoming",
+      status: "success",
+      amount,
+      fee: `0 ${asset.symbol}`,
+      from: "External deposit",
+      to: account?.address ?? "",
+      hash: fakeHash(),
+      createdAt: now()
+    };
+    const nextWallet: Wallet = {
+      ...activeWallet,
+      assets: activeWallet.assets.map((holding) =>
+        holding.assetId === assetId ? { ...holding, balance: roundBalance(holding.balance + amount) } : holding
+      ),
+      transactions: [tx, ...activeWallet.transactions]
+    };
+    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
+    toast(`Received ${amount} ${asset.symbol}.`);
   }
 
   function copyText(value: string, label = "Copied.") {
@@ -865,6 +964,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           assetId={searchParams.get("asset") ?? activeWallet?.assets[0]?.assetId ?? "eth"}
           onAssetChange={(assetId) => router.push(`/receive?asset=${assetId}`)}
           onCopyText={copyText}
+          onReceive={handleReceive}
           onShareText={shareText}
         />
       );

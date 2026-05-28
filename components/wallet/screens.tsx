@@ -245,7 +245,7 @@ export function WalletSuccessScreen() {
     <div className="max-w-2xl mx-auto w-full py-12 text-left">
       <EmptyState
         title="Vault Decrypted & Ready"
-        text="Your wallet metadata is stored in Supabase. Recovery words remain on this device."
+        text="Your wallet metadata is stored in Supabase. MVP test balances are ready for send and receive flows."
         icon={CheckCircle2}
         actions={
           <>
@@ -954,14 +954,18 @@ export function ReceiveScreen({
   assetId,
   onAssetChange,
   onCopyText,
+  onReceive,
   onShareText
 }: {
   activeWallet: Wallet | null;
   assetId: string;
   onAssetChange: (assetId: string) => void;
   onCopyText: (value: string) => void;
+  onReceive: (assetId: string, amount: number) => void;
   onShareText: (value: string) => void;
 }) {
+  const [amount, setAmount] = useState("1");
+
   if (!activeWallet) return null;
   const asset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
@@ -985,6 +989,41 @@ export function ReceiveScreen({
                 <button className={`${buttonSecondary} !min-h-0 h-9 px-3`} onClick={() => onCopyText(account.address)} type="button">
                   <Copy className="h-3.5 w-3.5" />
                   Copy
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-2 rounded-ui border border-white/5 bg-black/30 p-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">MVP Receive Amount</span>
+              <p className="text-[11px] text-slate-500 leading-normal">
+                Add a test deposit to this wallet so the MVP history and balances can be verified.
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    className="focus-ring min-h-[42px] w-full rounded-ui border border-white/10 bg-black/40 px-3.5 text-xs text-white"
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase font-mono">
+                    {asset.symbol}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const parsed = Number(amount);
+                    if (!Number.isFinite(parsed) || parsed <= 0) return;
+                    onReceive(asset.id, parsed);
+                  }}
+                  className={`${buttonPrimary} !min-h-[42px] px-4 py-2 text-xs`}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Add
                 </button>
               </div>
             </div>
