@@ -5,8 +5,9 @@ import {
   X
 } from "lucide-react";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { ReactNode, useEffect, useState } from "react";
-import { assetById, formatDate, qrCells } from "@/lib/mock-data";
+import { assetById, formatDate } from "@/lib/mock-data";
 import type { WalletTransaction } from "@/lib/types";
 import { buttonGhost, buttonPrimary } from "@/components/wallet/constants";
 
@@ -474,26 +475,47 @@ export function BackupModal({ onClose }: { onClose: () => void }) {
 }
 
 export function QrCode({ value }: { value: string }) {
-  const cells = qrCells(value);
-  const size = 21;
-  const paths: string[] = [];
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      if (cells[y * size + x]) {
-        paths.push(`M${x},${y}h1v1h-1z`);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    QRCode.toDataURL(value.trim(), {
+      errorCorrectionLevel: "Q",
+      margin: 2,
+      scale: 10,
+      width: 320,
+      color: {
+        dark: "#03050c",
+        light: "#ffffff"
       }
-    }
-  }
+    })
+      .then((url) => {
+        if (active) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (active) setQrDataUrl("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [value]);
 
   return (
-    <div className="w-full max-w-[200px] aspect-square rounded-ui border-[12px] border-[#f8fbff] bg-[#f8fbff] flex items-center justify-center">
-      <svg
-        viewBox="0 0 21 21"
-        className="w-full h-full text-[#03050c]"
-        shapeRendering="crispEdges"
-      >
-        <path d={paths.join(" ")} fill="currentColor" />
-      </svg>
+    <div className="w-full max-w-[260px] aspect-square rounded-[18px] border-[14px] border-white bg-white shadow-[0_18px_60px_rgba(0,0,0,0.35)] flex items-center justify-center">
+      {qrDataUrl ? (
+        <img
+          alt="Wallet address QR code"
+          className="h-full w-full object-contain [image-rendering:pixelated]"
+          draggable={false}
+          src={qrDataUrl}
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center rounded-ui bg-slate-100 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          QR unavailable
+        </div>
+      )}
     </div>
   );
 }
