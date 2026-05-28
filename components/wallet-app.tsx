@@ -989,6 +989,8 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
               walletLocked={walletLocked}
               onToggleLock={toggleLock}
               onWalletChange={updateActiveWallet}
+              onAddWallet={startCreateWallet}
+              onLogout={logout}
             />
             <main ref={routeScope} className="mx-auto grid w-full max-w-[1440px] min-w-0 gap-4 px-3 pb-8 xs:px-4 sm:gap-5 sm:px-6 lg:px-8">
               {renderRoute()}

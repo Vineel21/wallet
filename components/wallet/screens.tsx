@@ -217,7 +217,7 @@ export function ImportWalletScreen({
           <div className="grid gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Recovery Phrase</span>
             <textarea
-              className="focus-ring min-h-24 resize-y rounded-ui border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-cyan/50 focus:bg-black/60 focus:shadow-cyanGlow transition-all duration-300 font-mono"
+              className="focus-ring min-h-24 resize-y rounded-ui border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-slate-600 hover:border-cyan/35 hover:bg-[#0f1624]/40 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-mono"
               name="phrase"
               placeholder="anchor bridge canyon dawn ember fabric globe harbor island jungle kernel lantern"
               required
@@ -505,7 +505,7 @@ export function DashboardScreen({
     <section className="mx-auto grid w-full max-w-[1440px] gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {/* Bento Item 1: Portfolio Balance & Holographic Card (Spans 2 columns) */}
       <div className="md:col-span-2">
-        <article className="glass-panel relative flex h-full min-w-0 flex-col justify-between gap-5 overflow-hidden rounded-ui p-4 shadow-glow sm:gap-6 sm:p-6">
+        <Panel animate className="relative flex h-full min-w-0 flex-col justify-between gap-5 overflow-hidden shadow-glow sm:gap-6">
           <div className="absolute inset-0 bg-gradient-to-r from-purple/5 via-pink/5 to-transparent pointer-events-none -z-10" />
           <div className="flex flex-col sm:flex-row justify-between items-start gap-6 w-full">
             <div className="min-w-0 text-left">
@@ -533,13 +533,13 @@ export function DashboardScreen({
               <div className="grid grid-cols-5 gap-1 rounded-ui border border-white/5 bg-white/[0.03] p-0.5 xs:flex">
                 {(["1D", "1W", "1M", "1Y", "ALL"] as const).map((t) => (
                   <button
-                    key={t}
-                    onClick={() => setTimeframe(t)}
-                    className={`px-2.5 py-1 text-[10px] font-bold font-mono rounded-[8px] transition-all duration-200 ${
-                      timeframe === t
-                        ? "bg-purple text-white shadow-glow"
-                        : "text-slate-400 hover:text-white"
-                    }`}
+                     key={t}
+                     onClick={() => setTimeframe(t)}
+                     className={`px-2.5 py-1 text-[10px] font-bold font-mono rounded-[8px] transition-all duration-200 ${
+                       timeframe === t
+                         ? "bg-purple text-white shadow-glow"
+                         : "text-slate-400 hover:text-white"
+                     }`}
                   >
                     {t}
                   </button>
@@ -548,11 +548,11 @@ export function DashboardScreen({
             </div>
             <AreaChart timeframe={timeframe} />
           </div>
-        </article>
+        </Panel>
       </div>
 
       {/* Bento Item 2: Quick Action Portals (Spans 1 column) */}
-      <div className="glass-panel flex h-full min-w-0 flex-col justify-between rounded-ui p-4 sm:p-6">
+      <Panel className="flex h-full min-w-0 flex-col justify-between">
         <div className="mb-4 text-left">
           <h2 className="text-lg font-bold font-display text-white">Quick Portal</h2>
           <p className="text-xs text-slate-500 font-mono mt-0.5">Route instantly between transactions</p>
@@ -563,7 +563,7 @@ export function DashboardScreen({
           <QuickActionPortal href="/settings" icon={ShieldCheck} label="Security" theme="purple" />
           <QuickActionPortal href="/history" icon={History} label="History" theme="amber" />
         </div>
-      </div>
+      </Panel>
 
       {/* Bento Item 3: Supported Assets (Spans 2 columns) */}
       <div className="md:col-span-2">
@@ -617,15 +617,15 @@ export function AssetsPageScreen({
           <h2 className="text-3xl font-bold font-display text-white">Assets</h2>
           <p className="mt-1.5 text-xs text-slate-400 font-mono">Search, audit, and bookmark wallet holdings.</p>
         </div>
-        <label className="relative block w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <div className="relative block w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 animate-pulse" />
           <input
-            className="focus-ring min-h-[44px] w-full rounded-ui border border-white/10 bg-black/40 py-2 pl-9 pr-4 text-sm text-white focus:border-cyan/50 focus:bg-black/60 focus:shadow-cyanGlow transition-all duration-300"
+            className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 hover:border-cyan/35 hover:bg-[#0f1624]/40 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit"
             placeholder="Search assets..."
             value={assetSearch}
             onChange={(event) => onAssetSearch(event.target.value)}
           />
-        </label>
+        </div>
       </div>
       {holdings.length ? <AssetList holdings={holdings} /> : <EmptyState title="No assets found" text="Try a different symbol or asset name." icon={Search} />}
     </section>
@@ -761,34 +761,32 @@ export function SendScreen({
             />
 
             {/* Recipient Address */}
-            <div className="relative grid gap-1.5 w-full">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Recipient Address</span>
-              <input
-                className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-mono"
-                name="recipient"
-                placeholder="0x... or bc1q..."
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                required
-              />
-              {internalRecipients.length > 0 && (
-                <div className="mt-2 grid gap-2 rounded-ui border border-white/5 bg-black/30 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">Send to your wallets</span>
-                  <div className="flex flex-wrap gap-2">
-                    {internalRecipients.map(({ wallet, account }) => (
-                      <button
-                        key={`${wallet.id}-${account.id}`}
-                        type="button"
-                        className="rounded-ui border border-white/5 bg-white/[0.03] px-3 py-2 text-left text-xs font-semibold text-slate-300 transition hover:border-cyan/30 hover:text-white"
-                        onClick={() => setRecipient(account.address)}
-                      >
-                        {wallet.name}
-                      </button>
-                    ))}
-                  </div>
+            <Field
+              label="Recipient Address"
+              name="recipient"
+              placeholder="0x... or bc1q..."
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              required
+              className="font-mono"
+            />
+            {internalRecipients.length > 0 && (
+              <div className="mt-2 grid gap-2 rounded-ui border border-white/5 bg-black/30 p-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">Send to your wallets</span>
+                <div className="flex flex-wrap gap-2">
+                  {internalRecipients.map(({ wallet, account }) => (
+                    <button
+                      key={`${wallet.id}-${account.id}`}
+                      type="button"
+                      className="rounded-ui border border-white/5 bg-white/[0.03] px-3 py-2 text-left text-xs font-semibold text-slate-300 transition hover:border-cyan/30 hover:text-white"
+                      onClick={() => setRecipient(account.address)}
+                    >
+                      {wallet.name}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Amount */}
             <div className="relative grid gap-1.5 w-full">
@@ -800,7 +798,7 @@ export function SendScreen({
               </div>
               <div className="relative flex items-center">
                 <input
-                  className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 pl-4 pr-16 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit"
+                  className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 pl-4 pr-16 py-2.5 text-sm text-white placeholder:text-slate-600 hover:border-cyan/35 hover:bg-[#0f1624]/40 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300"
                   name="amount"
                   type="number"
                   step="any"
@@ -915,7 +913,7 @@ export function ReviewScreen({
       <Panel animate className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple/5 to-transparent pointer-events-none -z-10" />
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-xl font-bold font-display text-white font-display">Review Transaction</h2>
+          <h2 className="text-xl font-bold font-display text-white">Review Transaction</h2>
           <Badge status="pending">unsigned</Badge>
         </div>
         <DetailGrid
@@ -1036,17 +1034,17 @@ export function ReceiveScreen({
                 Add a test deposit to this wallet so the MVP history and balances can be verified.
               </p>
               <div className="grid gap-2 xs:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="relative flex-1">
+                <div className="relative flex-1 flex items-center">
                   <input
                     type="number"
                     step="any"
                     min="0"
-                    className="focus-ring min-h-[42px] w-full rounded-ui border border-white/10 bg-black/40 px-3.5 text-xs text-white"
+                    className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 pl-4 pr-16 py-2.5 text-sm text-white placeholder:text-slate-600 hover:border-cyan/35 hover:bg-[#0f1624]/40 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit"
                     placeholder="Amount"
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase font-mono">
+                  <span className="absolute right-4 text-xs font-bold text-slate-400 font-mono uppercase">
                     {asset.symbol}
                   </span>
                 </div>
@@ -1057,7 +1055,7 @@ export function ReceiveScreen({
                     if (!Number.isFinite(parsed) || parsed <= 0) return;
                     onReceive(asset.id, parsed);
                   }}
-                  className={`${buttonPrimary} !min-h-[42px] px-4 py-2 text-xs`}
+                  className={`${buttonPrimary} !min-h-[46px] px-4 py-2.5 text-xs`}
                 >
                   <Download className="h-3.5 w-3.5" />
                   Add
@@ -1287,7 +1285,7 @@ export function ProfileScreen({
   return (
     <form className="grid gap-6 text-left max-w-2xl mx-auto w-full py-4" onSubmit={onProfile}>
       <Panel animate>
-        <h2 className="text-xl font-bold font-display text-white mb-4 font-display">Profile Details</h2>
+        <h2 className="text-xl font-bold font-display text-white mb-4">Profile Details</h2>
         <div className="grid gap-3">
           <Field label="Name" name="name" placeholder="Ada Lovelace" defaultValue={currentUser.name} required />
           <Field label="Email" name="email" type="email" placeholder="you@domain.com" defaultValue={currentUser.email} readOnly />

@@ -64,8 +64,10 @@ export function Topbar({
   userWallets,
   walletLocked,
   onToggleLock,
-  onWalletChange
-}: Omit<AppShellProps, "onAddWallet" | "onLogout">) {
+  onWalletChange,
+  onAddWallet,
+  onLogout
+}: AppShellProps) {
   return (
     <header className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-3 py-4 text-left xs:px-4 sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
       <div className="min-w-0">
@@ -88,12 +90,26 @@ export function Topbar({
             ))}
           </SelectControl>
         )}
+        <button
+          className="focus-ring lg:hidden grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-slate-300 hover:text-white hover:border-cyan/40 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
+          onClick={onAddWallet}
+          title="Add wallet"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
         <button className="focus-ring grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-slate-300 hover:text-white hover:border-purple/40 hover:shadow-glow transition-all" onClick={onToggleLock} title="Lock wallet">
           {walletLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
         </button>
         <Link className="focus-ring grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-slate-300 hover:text-white hover:border-purple/40 hover:shadow-glow transition-all" href="/profile" title="Profile">
           <User className="h-4 w-4" />
         </Link>
+        <button
+          className="focus-ring lg:hidden grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-rose hover:text-white hover:border-rose/40 hover:shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-all"
+          onClick={onLogout}
+          title="Logout"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
     </header>
   );

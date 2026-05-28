@@ -129,18 +129,26 @@ export function Field({
   type = "text",
   placeholder,
   defaultValue,
+  value,
+  onChange,
   required,
   readOnly,
-  icon: Icon
+  icon: Icon,
+  className = "",
+  ...props
 }: {
   label: string;
   name: string;
   type?: string;
   placeholder?: string;
   defaultValue?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   readOnly?: boolean;
   icon?: any;
+  className?: string;
+  [key: string]: any;
 }) {
   return (
     <div className="relative grid gap-1.5 font-outfit w-full">
@@ -152,15 +160,18 @@ export function Field({
           </span>
         )}
         <input
-          className={`focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 py-2.5 text-sm text-white placeholder:text-slate-600 read-only:text-slate-500 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit ${
+          className={`focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 py-2.5 text-sm text-white placeholder:text-slate-600 read-only:text-slate-500 hover:border-cyan/35 hover:bg-[#0f1624]/40 focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow transition-all duration-300 font-outfit ${
             Icon ? "pl-10 pr-4" : "px-4"
-          }`}
+          } ${className}`}
           defaultValue={defaultValue}
+          value={value}
+          onChange={onChange}
           name={name}
           placeholder={placeholder}
           readOnly={readOnly}
           required={required}
           type={type}
+          {...props}
         />
       </div>
     </div>
@@ -233,8 +244,8 @@ export function QuickAction({ href, icon: Icon, label }: { href: string; icon: L
 
 export function SectionHead({ title, href }: { title: string; href: string }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <h2 className="min-w-0 text-lg font-black">{title}</h2>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-left">
+      <h2 className="min-w-0 text-lg font-bold font-display text-white">{title}</h2>
       <Link className={buttonGhost} href={href}>
         View all
       </Link>
@@ -295,7 +306,7 @@ export function EmptyState({
         <Icon className="h-6 w-6" />
       </div>
       {badge}
-      <h3 className="text-xl font-black">{title}</h3>
+      <h3 className="text-xl font-bold font-display text-white">{title}</h3>
       <p className="max-w-2xl text-sm leading-6 text-slate-400">{text}</p>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </section>
@@ -533,7 +544,7 @@ export function SelectControl({
   };
 
   return (
-    <div className={`relative grid gap-1.5 text-left ${wrapperClassName}`} ref={containerRef}>
+    <div className={`relative grid gap-1.5 text-left ${wrapperClassName} ${isOpen ? "z-[60]" : "z-10"}`} ref={containerRef}>
       {label && (
         <span className="pl-1 text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
           {label}
@@ -577,7 +588,7 @@ export function SelectControl({
         {/* Custom dropdown list */}
         {isOpen && (
           <div
-            className="glass-panel absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto rounded-ui border border-white/10 bg-[#090d16]/95 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-50 animate-dropdown-in"
+            className="glass-panel absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto rounded-ui border border-white/15 bg-[#0c101c] p-1 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl z-50 animate-dropdown-in"
             role="listbox"
           >
             {options.length === 0 ? (
@@ -659,9 +670,9 @@ export function TransactionModal({ transaction, onClose }: { transaction: Wallet
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-ink/75 p-4 backdrop-blur-md">
       <article className="glass-panel w-[min(620px,100%)] rounded-ui p-5">
-        <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="mb-4 flex items-start justify-between gap-3 text-left">
           <div>
-            <h2 className="text-xl font-black">Transaction details</h2>
+            <h2 className="text-xl font-bold font-display text-white">Transaction details</h2>
             <p className="mt-1 text-sm text-slate-400">{asset.name} on {asset.chain}</p>
           </div>
           <button className="focus-ring grid h-10 w-10 place-items-center rounded-ui border border-white/10 text-slate-300" onClick={onClose} title="Close">
@@ -688,11 +699,11 @@ export function TransactionModal({ transaction, onClose }: { transaction: Wallet
 export function BackupModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-ink/75 p-4 backdrop-blur-md">
-      <article className="glass-panel w-[min(560px,100%)] rounded-ui p-5">
+      <article className="glass-panel w-[min(560px,100%)] rounded-ui p-5 text-left">
         <div className="mb-4 grid h-12 w-12 place-items-center rounded-ui border border-amber/25 bg-amber/10 text-amber">
           <AlertTriangle className="h-6 w-6" />
         </div>
-        <h2 className="text-xl font-black">Backup warning</h2>
+        <h2 className="text-xl font-bold font-display text-white">Backup warning</h2>
         <p className="mt-2 text-sm leading-6 text-slate-300">
           Recovery words remain on this device. Protect the phrase offline and never share it.
         </p>
