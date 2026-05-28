@@ -641,6 +641,25 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       hash,
       createdAt: now()
     };
+    const recipientWallet = wallets.find(
+      (wallet) =>
+        wallet.id !== activeWallet.id &&
+        wallet.accounts.some((account) => account.address.toLowerCase() === pendingTransfer.recipient.toLowerCase())
+    );
+    const recipientTx: WalletTransaction | null = recipientWallet
+      ? {
+          id: uid("tx"),
+          assetId: pendingTransfer.assetId,
+          type: "incoming",
+          status,
+          amount: pendingTransfer.amount,
+          fee: `0 ${asset.symbol}`,
+          from: account.address,
+          to: pendingTransfer.recipient,
+          hash,
+          createdAt: now()
+        }
+      : null;
     const nextWallet: Wallet = {
       ...activeWallet,
       assets: activeWallet.assets.map((holding) =>
@@ -650,7 +669,23 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       ),
       transactions: [tx, ...activeWallet.transactions]
     };
-    persistWallets(wallets.map((wallet) => (wallet.id === activeWallet.id ? nextWallet : wallet)));
+    persistWallets(
+      wallets.map((wallet) => {
+        if (wallet.id === activeWallet.id) return nextWallet;
+        if (recipientWallet && recipientTx && wallet.id === recipientWallet.id && status === "success") {
+          return {
+            ...wallet,
+            assets: wallet.assets.map((holding) =>
+              holding.assetId === pendingTransfer.assetId
+                ? { ...holding, balance: roundBalance(holding.balance + pendingTransfer.amount) }
+                : holding
+            ),
+            transactions: [recipientTx, ...wallet.transactions]
+          };
+        }
+        return wallet;
+      })
+    );
     const result: TransferResult = {
       status,
       hash,
@@ -932,6 +967,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
           formError={formError}
           onAssetChange={(assetId) => router.push(`/send?asset=${assetId}`)}
           onSend={handleSend}
+          userWallets={userWallets}
         />
       );
     }

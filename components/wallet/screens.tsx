@@ -719,13 +719,15 @@ export function SendScreen({
   assetId,
   formError,
   onAssetChange,
-  onSend
+  onSend,
+  userWallets
 }: {
   activeWallet: Wallet | null;
   assetId: string;
   formError: string;
   onAssetChange: (assetId: string) => void;
   onSend: (event: FormEvent<HTMLFormElement>) => void;
+  userWallets: Wallet[];
 }) {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
@@ -733,6 +735,13 @@ export function SendScreen({
   if (!activeWallet) return null;
   const activeAsset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const holding = activeWallet.assets.find((item) => item.assetId === activeAsset.id);
+  const internalRecipients = userWallets
+    .filter((wallet) => wallet.id !== activeWallet.id)
+    .map((wallet) => {
+      const account = wallet.accounts.find((item) => item.chain === activeAsset.chain) ?? wallet.accounts[0];
+      return account ? { wallet, account } : null;
+    })
+    .filter(Boolean) as Array<{ wallet: Wallet; account: Wallet["accounts"][number] }>;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3 max-w-5xl mx-auto w-full py-4 text-left">
@@ -759,6 +768,23 @@ export function SendScreen({
                 onChange={(e) => setRecipient(e.target.value)}
                 required
               />
+              {internalRecipients.length > 0 && (
+                <div className="mt-2 grid gap-2 rounded-ui border border-white/5 bg-black/30 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">Send to your wallets</span>
+                  <div className="flex flex-wrap gap-2">
+                    {internalRecipients.map(({ wallet, account }) => (
+                      <button
+                        key={`${wallet.id}-${account.id}`}
+                        type="button"
+                        className="rounded-ui border border-white/5 bg-white/[0.03] px-3 py-2 text-left text-xs font-semibold text-slate-300 transition hover:border-cyan/30 hover:text-white"
+                        onClick={() => setRecipient(account.address)}
+                      >
+                        {wallet.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Amount */}
