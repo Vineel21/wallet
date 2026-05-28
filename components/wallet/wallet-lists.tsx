@@ -4,7 +4,7 @@ import { Copy, History, Star, WalletCards, ArrowDownLeft, ArrowUpRight } from "l
 import Link from "next/link";
 import { assetById, formatAmount, formatDate, money, shortAddress } from "@/lib/mock-data";
 import type { Wallet, WalletHolding, WalletTransaction } from "@/lib/types";
-import { AssetIcon, Badge, capitalize, EmptyState } from "@/components/wallet/ui";
+import { AssetIcon, Badge, capitalize, EmptyState, SelectControl } from "@/components/wallet/ui";
 
 export function Sparkline({ seed, color = "var(--cyan)" }: { seed: string; color?: string }) {
   const hash = hashString(seed);
@@ -59,11 +59,9 @@ export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
   }
 
   return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <div className="inline-block min-w-full align-middle">
-        <div className="overflow-hidden border border-white/5 bg-white/[0.01] rounded-ui backdrop-blur-md">
+    <div className="overflow-hidden rounded-ui border border-white/5 bg-white/[0.01] backdrop-blur-md">
           {/* Table Headers */}
-          <div className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1.5fr] items-center px-5 py-3.5 border-b border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+          <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(96px,0.75fr)] items-center gap-3 border-b border-white/5 px-3 py-3 text-[9px] font-bold uppercase tracking-widest text-slate-400 font-mono xs:px-4 sm:grid-cols-[2fr_1fr_1fr_1.5fr] sm:px-5 sm:py-3.5 sm:text-[10px]">
             <span>Asset</span>
             <span className="text-left hidden sm:block">24h Change</span>
             <span className="text-center hidden sm:block">Market trend</span>
@@ -76,7 +74,7 @@ export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
               const change = MOCK_CHANGES[holding.assetId] || { percent: "0.00%", positive: true };
               return (
                 <Link
-                  className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1fr_1.5fr] items-center px-5 py-4 transition duration-300 hover:bg-white/[0.03] group text-left"
+                  className="grid grid-cols-[minmax(0,1.25fr)_minmax(96px,0.75fr)] items-center gap-3 px-3 py-3.5 text-left transition duration-300 hover:bg-white/[0.03] group xs:px-4 sm:grid-cols-[2fr_1fr_1fr_1.5fr] sm:px-5 sm:py-4"
                   data-float-in
                   href={`/asset/${asset.id}`}
                   key={asset.id}
@@ -110,11 +108,11 @@ export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
                   </div>
 
                   {/* Column 4: Balance */}
-                  <div className="text-right shrink-0">
-                    <strong className="block font-semibold text-white font-outfit text-sm sm:text-base">
+                  <div className="min-w-0 text-right">
+                    <strong className="block break-words text-xs font-semibold leading-tight text-white font-outfit xs:text-sm sm:text-base">
                       {formatAmount(holding.balance)} {asset.symbol}
                     </strong>
-                    <span className="block text-xs text-slate-400 mt-0.5 font-outfit">
+                    <span className="mt-0.5 block text-[11px] text-slate-400 font-outfit sm:text-xs">
                       {money(holding.balance * asset.price)}
                     </span>
                     {/* Fallback 24h change for mobile */}
@@ -128,8 +126,6 @@ export function AssetList({ holdings }: { holdings: WalletHolding[] }) {
               );
             })}
           </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -148,7 +144,7 @@ export function TxList({
   return (
     <div className="overflow-hidden border border-white/5 bg-white/[0.01] rounded-ui backdrop-blur-md">
       {/* Table Headers */}
-      <div className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1.5fr] items-center px-5 py-3.5 border-b border-white/5 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+      <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(100px,0.75fr)] items-center gap-3 border-b border-white/5 px-3 py-3 text-[9px] font-bold uppercase tracking-widest text-slate-400 font-mono xs:px-4 sm:grid-cols-[2fr_1fr_1.5fr] sm:px-5 sm:py-3.5 sm:text-[10px]">
         <span>Activity</span>
         <span className="text-center hidden sm:block">Market flow</span>
         <span className="text-right">Amount / Status</span>
@@ -159,7 +155,7 @@ export function TxList({
           const asset = assetById(tx.assetId);
           return (
             <button
-              className="grid grid-cols-[1.5fr_1fr] sm:grid-cols-[2fr_1fr_1.5fr] items-center px-5 py-4 w-full text-left transition duration-300 hover:bg-white/[0.03] group"
+              className="grid w-full grid-cols-[minmax(0,1.25fr)_minmax(100px,0.75fr)] items-center gap-3 px-3 py-3.5 text-left transition duration-300 hover:bg-white/[0.03] group xs:px-4 sm:grid-cols-[2fr_1fr_1.5fr] sm:px-5 sm:py-4"
               data-float-in
               key={tx.id}
               onClick={() => onOpenTransaction(tx.id)}
@@ -192,8 +188,8 @@ export function TxList({
               </div>
 
               {/* Column 3: Amount & Badge */}
-              <div className="text-right shrink-0">
-                <strong className={`block font-semibold font-outfit text-sm sm:text-base ${
+              <div className="min-w-0 text-right">
+                <strong className={`block break-words text-xs font-semibold leading-tight font-outfit xs:text-sm sm:text-base ${
                   tx.type === "incoming" ? "text-mint" : "text-slate-200"
                 }`}>
                   {tx.type === "incoming" ? "+" : "-"}
@@ -254,24 +250,21 @@ export function AssetSelect({
   onAssetChange: (assetId: string) => void;
 }) {
   return (
-    <div className="relative grid gap-1.5 text-left">
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Asset</span>
-      <select
-        className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 px-3 text-sm text-white focus:border-cyan/50 focus:bg-black/60 focus:shadow-cyanGlow transition-all duration-300"
-        defaultValue={selected}
-        name={name}
-        onChange={(event) => onAssetChange(event.target.value)}
-        required
-      >
-        {wallet.assets.map((holding) => {
-          const asset = assetById(holding.assetId);
-          return (
-            <option key={asset.id} value={asset.id} className="bg-ink">
-              {asset.symbol} - {asset.name} (available {formatAmount(holding.balance)})
-            </option>
-          );
-        })}
-      </select>
-    </div>
+    <SelectControl
+      defaultValue={selected}
+      label="Asset"
+      name={name}
+      onChange={(event) => onAssetChange(event.target.value)}
+      required
+    >
+      {wallet.assets.map((holding) => {
+        const asset = assetById(holding.assetId);
+        return (
+          <option key={asset.id} value={asset.id} className="bg-ink">
+            {asset.symbol} - {asset.name} (available {formatAmount(holding.balance)})
+          </option>
+        );
+      })}
+    </SelectControl>
   );
 }

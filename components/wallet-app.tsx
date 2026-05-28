@@ -952,7 +952,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
   const selectedTx = selectedTxId && activeWallet ? activeWallet.transactions.find((tx) => tx.id === selectedTxId) : null;
 
   return (
-    <div className="min-h-screen wallet-grid-bg">
+    <div className="min-h-screen max-w-full overflow-x-hidden wallet-grid-bg">
       <CustomCursor />
       {routeName === "landing" ? (
         <LandingPage />
@@ -970,7 +970,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       ) : (
         <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[252px_minmax(0,1fr)]">
           <Sidebar routeName={routeName} onAddWallet={startCreateWallet} onLogout={logout} />
-          <div className="min-w-0 pb-24 lg:pb-0">
+          <div className="min-w-0 max-w-full pb-24 lg:pb-0">
             <Topbar
               activeWallet={activeWallet}
               activeWalletId={activeWalletId}
@@ -981,7 +981,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
               onToggleLock={toggleLock}
               onWalletChange={updateActiveWallet}
             />
-            <main ref={routeScope} className="mx-auto grid w-full max-w-[1440px] gap-5 px-4 pb-8 sm:px-6 lg:px-8">
+            <main ref={routeScope} className="mx-auto grid w-full max-w-[1440px] min-w-0 gap-4 px-3 pb-8 xs:px-4 sm:gap-5 sm:px-6 lg:px-8">
               {renderRoute()}
             </main>
           </div>
@@ -992,7 +992,7 @@ export function WalletApp({ initialRoute }: WalletAppProps) {
       {showBackupModal && routeName === "create-wallet" && (
         <BackupModal onClose={() => setShowBackupModal(false)} />
       )}
-      <div className="fixed bottom-4 right-4 z-[80] grid gap-2">
+      <div className="fixed bottom-4 left-3 right-3 z-[80] grid gap-2 sm:left-auto sm:right-4 sm:w-[min(360px,calc(100vw-32px))]">
         {toasts.map((item) => (
           <div
             key={item.id}

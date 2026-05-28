@@ -1,10 +1,10 @@
 "use client";
 
-import { Lock, LogOut, Plus, Unlock, User, ChevronDown } from "lucide-react";
+import { Lock, LogOut, Plus, Unlock, User } from "lucide-react";
 import Link from "next/link";
 import type { Wallet } from "@/lib/types";
 import { buttonGhost, buttonSecondary, mobileNavItems, navItems } from "@/components/wallet/constants";
-import { Brand, NavLink, pageTitle } from "@/components/wallet/ui";
+import { Brand, NavLink, pageTitle, SelectControl } from "@/components/wallet/ui";
 
 type AppShellProps = {
   activeWallet: Wallet | null;
@@ -67,28 +67,26 @@ export function Topbar({
   onWalletChange
 }: Omit<AppShellProps, "onAddWallet" | "onLogout">) {
   return (
-    <header className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 text-left">
+    <header className="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-3 py-4 text-left xs:px-4 sm:px-6 sm:py-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan/80 font-mono">{currentUserName || "Wallax"}</p>
-        <h1 className="truncate text-3xl font-bold tracking-tight text-white sm:text-4xl font-display">{pageTitle(routeName)}</h1>
+        <h1 className="truncate text-2xl font-bold tracking-tight text-white xs:text-3xl sm:text-4xl font-display">{pageTitle(routeName)}</h1>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
         {userWallets.length > 0 && (
-          <div className="relative">
-            <select
-              className="focus-ring min-h-10 rounded-ui border border-white/5 bg-[#0f1624]/60 pl-3 pr-8 text-sm font-bold text-white hover:border-cyan/40 hover:bg-[#0f1624]/90 transition-all appearance-none cursor-pointer"
-              value={activeWallet?.id ?? activeWalletId}
-              onChange={(event) => onWalletChange(event.target.value)}
-              title="Wallet selector"
-            >
-              {userWallets.map((wallet) => (
-                <option key={wallet.id} value={wallet.id}>
-                  {wallet.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          </div>
+          <SelectControl
+            wrapperClassName="min-w-0 flex-1 sm:flex-none"
+            className="min-h-10 py-2 text-xs sm:w-[220px] sm:text-sm"
+            value={activeWallet?.id ?? activeWalletId}
+            onChange={(event) => onWalletChange(event.target.value)}
+            title="Wallet selector"
+          >
+            {userWallets.map((wallet) => (
+              <option className="bg-ink" key={wallet.id} value={wallet.id}>
+                {wallet.name}
+              </option>
+            ))}
+          </SelectControl>
         )}
         <button className="focus-ring grid h-10 w-10 place-items-center rounded-ui border border-white/5 bg-[#0f1624]/60 text-slate-300 hover:text-white hover:border-purple/40 hover:shadow-glow transition-all" onClick={onToggleLock} title="Lock wallet">
           {walletLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}

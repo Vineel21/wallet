@@ -1,12 +1,13 @@
 import {
   AlertTriangle,
+  ChevronDown,
   ChevronRight,
   LucideIcon,
   X
 } from "lucide-react";
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode, type SelectHTMLAttributes, useEffect, useState } from "react";
 import { assetById, formatDate } from "@/lib/mock-data";
 import type { WalletTransaction } from "@/lib/types";
 import { buttonGhost, buttonPrimary } from "@/components/wallet/constants";
@@ -179,7 +180,7 @@ export function Panel({
   animate?: boolean;
 }) {
   return (
-    <article className={`glass-panel rounded-ui p-5 sm:p-6 ${className}`} data-animate={animate ? true : undefined}>
+    <article className={`glass-panel min-w-0 max-w-full rounded-ui p-5 sm:p-6 ${className}`} data-animate={animate ? true : undefined}>
       {children}
     </article>
   );
@@ -231,8 +232,8 @@ export function QuickAction({ href, icon: Icon, label }: { href: string; icon: L
 
 export function SectionHead({ title, href }: { title: string; href: string }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="text-lg font-black">{title}</h2>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 className="min-w-0 text-lg font-black">{title}</h2>
       <Link className={buttonGhost} href={href}>
         View all
       </Link>
@@ -268,7 +269,7 @@ export function Badge({
           ? "border-rose/30 bg-rose/10 text-[#ffc0ce]"
           : "border-white/10 bg-white/[0.055] text-slate-300";
   return (
-    <span className={`inline-flex min-h-6 items-center justify-center rounded-full border px-2.5 py-1 text-xs font-black capitalize ${colors}`}>
+    <span className={`inline-flex min-h-6 shrink-0 items-center justify-center rounded-full border px-2.5 py-1 text-xs font-black capitalize ${colors}`}>
       {children}
     </span>
   );
@@ -369,7 +370,7 @@ export function StaticRow({
   badge: ReactNode;
 }) {
   return (
-    <div className="thin-panel flex min-h-[70px] min-w-0 items-center justify-between gap-3 rounded-ui p-3">
+    <div className="thin-panel flex min-h-[70px] min-w-0 flex-col items-start justify-between gap-3 rounded-ui p-3 sm:flex-row sm:items-center">
       <div className="flex min-w-0 items-center gap-3">
         <Icon className="h-5 w-5 shrink-0 text-cyan" />
         <div className="min-w-0">
@@ -377,8 +378,39 @@ export function StaticRow({
           <span className="block truncate text-sm text-slate-400">{subtitle}</span>
         </div>
       </div>
-      <div className="shrink-0">{badge}</div>
+      <div className="shrink-0 self-start sm:self-center">{badge}</div>
     </div>
+  );
+}
+
+export function SelectControl({
+  label,
+  wrapperClassName = "",
+  className = "",
+  children,
+  ...props
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  label?: string;
+  wrapperClassName?: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className={`grid min-w-0 gap-1.5 text-left ${wrapperClassName}`}>
+      {label && (
+        <span className="pl-1 text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+          {label}
+        </span>
+      )}
+      <span className="relative block min-w-0">
+        <select
+          {...props}
+          className={`focus-ring min-h-[46px] w-full min-w-0 cursor-pointer appearance-none rounded-ui border border-white/10 bg-[#080d1a]/85 py-2.5 pl-3.5 pr-10 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-all duration-300 hover:border-cyan/35 hover:bg-[#0f1624] focus:border-cyan/50 focus:bg-[#080d1a] focus:shadow-cyanGlow ${className}`}
+        >
+          {children}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      </span>
+    </label>
   );
 }
 
@@ -394,20 +426,13 @@ export function FilterSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="grid gap-2">
-      <span className="text-sm font-bold text-slate-300">{label}</span>
-      <select
-        className="focus-ring min-h-11 rounded-ui border border-white/10 bg-panel2 px-3 text-sm text-white"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
-      </select>
-    </label>
+    <SelectControl label={label} value={value} onChange={(event) => onChange(event.target.value)}>
+      {options.map(([optionValue, optionLabel]) => (
+        <option className="bg-ink" key={optionValue} value={optionValue}>
+          {optionLabel}
+        </option>
+      ))}
+    </SelectControl>
   );
 }
 

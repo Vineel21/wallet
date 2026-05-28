@@ -45,6 +45,7 @@ import {
   QrCode,
   QuickAction,
   SectionHead,
+  SelectControl,
   SettingsRow,
   shuffledOptions,
   StaticRow,
@@ -168,8 +169,7 @@ export function ConfirmPhraseScreen({
           {checks.map((index) => (
             <div className="grid gap-1.5" key={index}>
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Word #{index + 1}</span>
-              <select
-                className="focus-ring min-h-[46px] w-full rounded-ui border border-white/10 bg-black/40 px-3 text-sm text-white focus:border-cyan/50 focus:bg-black/60 focus:shadow-cyanGlow transition-all duration-300"
+              <SelectControl
                 name={`word${index}`}
                 required
               >
@@ -179,7 +179,7 @@ export function ConfirmPhraseScreen({
                     {word}
                   </option>
                 ))}
-              </select>
+              </SelectControl>
             </div>
           ))}
         </div>
@@ -473,7 +473,7 @@ function QuickActionPortal({ href, icon: Icon, label, theme }: { href: string; i
 
   return (
     <Link 
-      className={`group flex flex-col items-center justify-center gap-3 rounded-ui border border-white/5 bg-white/[0.015] p-5 text-center transition-all ${colors.border} hover:scale-[1.03] active:scale-[0.97] duration-300`} 
+      className={`group flex min-h-24 flex-col items-center justify-center gap-2 rounded-ui border border-white/5 bg-white/[0.015] p-4 text-center transition-all ${colors.border} hover:scale-[1.03] active:scale-[0.97] duration-300 sm:gap-3 sm:p-5`}
       href={href}
     >
       <span className={`grid h-11 w-11 place-items-center rounded-xl ${colors.badgeBg} border ${colors.shadow} transition-all duration-300`}>
@@ -502,16 +502,16 @@ export function DashboardScreen({
   const txs = activeWallet.transactions.slice(0, 4);
 
   return (
-    <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-[1440px] mx-auto w-full">
+    <section className="mx-auto grid w-full max-w-[1440px] gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
       {/* Bento Item 1: Portfolio Balance & Holographic Card (Spans 2 columns) */}
       <div className="md:col-span-2">
-        <article className="glass-panel rounded-ui p-6 shadow-glow relative overflow-hidden flex flex-col justify-between gap-6 h-full">
+        <article className="glass-panel relative flex h-full min-w-0 flex-col justify-between gap-5 overflow-hidden rounded-ui p-4 shadow-glow sm:gap-6 sm:p-6">
           <div className="absolute inset-0 bg-gradient-to-r from-purple/5 via-pink/5 to-transparent pointer-events-none -z-10" />
           <div className="flex flex-col sm:flex-row justify-between items-start gap-6 w-full">
-            <div className="text-left">
+            <div className="min-w-0 text-left">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Decrypted Net Worth</span>
               <div className="flex flex-wrap items-baseline gap-3 mt-1.5">
-                <strong className="text-4xl sm:text-5xl font-bold tracking-tight text-white font-outfit">
+                <strong className="break-words text-3xl font-bold tracking-tight text-white font-outfit xs:text-4xl sm:text-5xl">
                   {money(total)}
                 </strong>
                 <span className="inline-flex items-center gap-1 rounded-full bg-mint/15 border border-mint/25 px-2.5 py-0.5 text-xs font-mono font-bold text-mint">
@@ -528,9 +528,9 @@ export function DashboardScreen({
           </div>
 
           <div className="w-full text-left">
-            <div className="flex items-center justify-between mt-2 border-t border-white/5 pt-4">
+            <div className="mt-2 flex flex-col gap-3 border-t border-white/5 pt-4 xs:flex-row xs:items-center xs:justify-between">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Performance history</span>
-              <div className="flex gap-1 bg-white/[0.03] border border-white/5 p-0.5 rounded-ui">
+              <div className="grid grid-cols-5 gap-1 rounded-ui border border-white/5 bg-white/[0.03] p-0.5 xs:flex">
                 {(["1D", "1W", "1M", "1Y", "ALL"] as const).map((t) => (
                   <button
                     key={t}
@@ -552,7 +552,7 @@ export function DashboardScreen({
       </div>
 
       {/* Bento Item 2: Quick Action Portals (Spans 1 column) */}
-      <div className="glass-panel rounded-ui p-6 flex flex-col justify-between h-full">
+      <div className="glass-panel flex h-full min-w-0 flex-col justify-between rounded-ui p-4 sm:p-6">
         <div className="mb-4 text-left">
           <h2 className="text-lg font-bold font-display text-white">Quick Portal</h2>
           <p className="text-xs text-slate-500 font-mono mt-0.5">Route instantly between transactions</p>
@@ -576,7 +576,7 @@ export function DashboardScreen({
       {/* Bento Item 4: Wallet Accounts (Spans 1 column) */}
       <div>
         <Panel animate className="h-full flex flex-col justify-between">
-          <div className="mb-4 flex items-center justify-between gap-3 text-left">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-left">
             <h2 className="text-lg font-bold font-display text-white">Wallet Accounts</h2>
             <Badge status="success">active</Badge>
           </div>
@@ -792,7 +792,7 @@ export function SendScreen({
 
             {/* Amount */}
             <div className="relative grid gap-1.5 w-full">
-              <div className="flex justify-between items-baseline pl-1">
+              <div className="flex flex-col gap-1 pl-1 xs:flex-row xs:items-baseline xs:justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Amount</span>
                 <span className="text-[11px] text-slate-500 font-mono">
                   Available: {holding ? formatAmount(holding.balance) : "0"} {activeAsset.symbol}
@@ -833,14 +833,14 @@ export function SendScreen({
             </div>
 
             <div className="grid gap-2 rounded-ui border border-white/5 bg-black/40 p-4 text-xs font-mono">
-              <div className="flex justify-between gap-3">
+              <div className="flex flex-col gap-1 xs:flex-row xs:justify-between xs:gap-3">
                 <span className="text-slate-400">Available Balance</span>
-                <strong className="text-white">{holding ? `${formatAmount(holding.balance)} ${activeAsset.symbol}` : "0"}</strong>
+                <strong className="break-words text-white xs:text-right">{holding ? `${formatAmount(holding.balance)} ${activeAsset.symbol}` : "0"}</strong>
               </div>
               <div className="h-px bg-white/5 my-1" />
-              <div className="flex justify-between gap-3">
+              <div className="flex flex-col gap-1 xs:flex-row xs:justify-between xs:gap-3">
                 <span className="text-slate-400">Estimated Gas Fee</span>
-                <strong className="text-white">{estimateFee(activeAsset.id)}</strong>
+                <strong className="text-white xs:text-right">{estimateFee(activeAsset.id)}</strong>
               </div>
             </div>
             <FormError message={formError} />
@@ -1005,8 +1005,8 @@ export function ReceiveScreen({
   const asset = assetById(assetId || activeWallet.assets[0]?.assetId || "eth");
   const account = activeWallet.accounts.find((item) => item.chain === asset.chain) ?? activeWallet.accounts[0];
   return (
-    <section className="grid gap-6 text-left max-w-4xl mx-auto w-full py-4 lg:grid-cols-2">
-      <Panel animate className="relative overflow-hidden flex flex-col justify-between p-6">
+    <section className="mx-auto grid w-full max-w-4xl gap-4 py-4 text-left sm:gap-6 lg:grid-cols-2">
+      <Panel animate className="relative flex flex-col justify-between overflow-hidden p-5 sm:p-6">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan/5 to-transparent pointer-events-none -z-10" />
         <div>
           <h2 className="text-xl font-bold font-display text-white mb-4">Receive Assets</h2>
@@ -1019,9 +1019,9 @@ export function ReceiveScreen({
             />
             <div className="relative grid gap-1.5 text-left">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 pl-1 font-mono">Your Deposit Address</span>
-              <div className="flex min-w-0 items-center gap-2 rounded-ui border border-white/10 bg-black/40 px-3.5 py-2.5">
+              <div className="flex min-w-0 flex-col gap-2 rounded-ui border border-white/10 bg-black/40 px-3.5 py-2.5 xs:flex-row xs:items-center">
                 <code className="min-w-0 flex-1 truncate text-xs text-slate-300 font-mono">{account.address}</code>
-                <button className={`${buttonSecondary} !min-h-0 h-9 px-3`} onClick={() => onCopyText(account.address)} type="button">
+                <button className={`${buttonSecondary} !min-h-0 h-9 w-full px-3 xs:w-auto`} onClick={() => onCopyText(account.address)} type="button">
                   <Copy className="h-3.5 w-3.5" />
                   Copy
                 </button>
@@ -1033,7 +1033,7 @@ export function ReceiveScreen({
               <p className="text-[11px] text-slate-500 leading-normal">
                 Add a test deposit to this wallet so the MVP history and balances can be verified.
               </p>
-              <div className="flex gap-2">
+              <div className="grid gap-2 xs:grid-cols-[minmax(0,1fr)_auto]">
                 <div className="relative flex-1">
                   <input
                     type="number"
@@ -1073,12 +1073,12 @@ export function ReceiveScreen({
         </div>
       </Panel>
       
-      <Panel animate className="flex flex-col items-center justify-center p-8 min-h-[300px]">
+      <Panel animate className="flex min-h-[300px] flex-col items-center justify-center p-5 sm:p-8">
         <div className="mb-6 flex items-center justify-between gap-3 w-full border-b border-white/5 pb-4">
           <h2 className="text-lg font-bold font-display text-white">QR Code</h2>
           <Badge>{asset.chain}</Badge>
         </div>
-        <div className="bg-white p-3.5 rounded-[16px] shadow-glow flex items-center justify-center">
+        <div className="flex max-w-full items-center justify-center rounded-[16px] bg-white p-2 shadow-glow sm:p-3.5">
           <QrCode value={account.address} />
         </div>
         <p className="mt-4 text-[11px] text-slate-500 font-mono text-center max-w-[200px]">
@@ -1172,9 +1172,9 @@ export function SettingsScreen({
   onToggleLock: () => void;
 }) {
   return (
-    <section className="grid gap-6 text-left max-w-4xl mx-auto w-full py-4 xl:grid-cols-2">
+    <section className="mx-auto grid w-full max-w-4xl gap-4 py-4 text-left sm:gap-6 xl:grid-cols-2">
       <Panel animate>
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold font-display text-white">Security Settings</h2>
           <Badge status={walletLocked ? "failed" : "success"}>{walletLocked ? "locked" : "unlocked"}</Badge>
         </div>
@@ -1200,7 +1200,7 @@ export function SettingsScreen({
       </Panel>
       
       <Panel animate>
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold font-display text-white">Decrypted Sessions</h2>
           <Badge status="pending">Local only</Badge>
         </div>
